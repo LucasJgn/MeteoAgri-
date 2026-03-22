@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Météo Agriculteur — La Roulandière</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Mono:wght@300;400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil: #3d2b1f; --soil-light: #5c4033; --wheat: #c9a84c; --wheat-light: #e8c96a;
+    --sky-deep: #7ab8d9; --green: #4a7c59; --green-light: #7ac87a; --rain: #4a6fa5;
+    --sun: #f5a623; --danger: #c0392b; --cream: #faf6ef; --text: #1a1208;
+    --muted: #7a6a55; --fog: #9a9080; --maize: #e8b84b; --maize-dark: #b8820a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Lato', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+header { background: var(–soil); color: var(–cream); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(–wheat); flex-wrap: wrap; gap: 10px; }
+header .logo { font-family: ‘Playfair Display’, serif; font-size: 1.4rem; font-weight: 700; }
+header .logo span { color: var(–wheat); }
+header .subtitle { font-family: ‘DM Mono’, monospace; font-size: 0.72rem; color: #bba080; margin-top: 2px; letter-spacing: 0.08em; text-transform: uppercase; }
+header .location-badge { font-family: ‘DM Mono’, monospace; font-size: 0.75rem; background: var(–wheat); color: var(–soil); padding: 6px 14px; border-radius: 2px; font-weight: 500; }
+
+main { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
+
+#loading { text-align: center; padding: 80px 20px; color: var(–muted); font-family: ‘DM Mono’, monospace; font-size: 0.9rem; }
+.spinner { width: 40px; height: 40px; border: 3px solid #e0d5c5; border-top-color: var(–wheat); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* CURRENT BANNER */
+#current-banner { background: linear-gradient(135deg, var(–soil) 0%, var(–soil-light) 100%); border-radius: 4px; padding: 24px 28px; display: flex; align-items: center; gap: 32px; margin-bottom: 24px; border-left: 6px solid var(–wheat); color: var(–cream); flex-wrap: wrap; }
+.current-temp { font-family: ‘Playfair Display’, serif; font-size: 4rem; font-weight: 700; color: var(–wheat-light); line-height: 1; }
+.current-temp sup { font-size: 1.5rem; vertical-align: super; }
+.current-desc { flex: 1; }
+.weather-label { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(–wheat-light); font-family: ‘Playfair Display’, serif; }
+.current-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 8px; }
+.current-meta .stat { font-family: ‘DM Mono’, monospace; font-size: 0.78rem; color: #c8b89a; }
+.current-meta .stat strong { color: var(–cream); font-size: 0.9rem; }
+.date-now { font-family: ‘DM Mono’, monospace; font-size: 0.7rem; color: #9a8060; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+
+.alert-box { background: #fff3cd; border: 1px solid var(–wheat); border-left: 5px solid var(–sun); border-radius: 3px; padding: 10px 16px; margin-bottom: 12px; font-size: 0.85rem; font-weight: 600; color: #7a5500; }
+.alert-box.danger { background: #fde8e8; border-color: var(–danger); border-left-color: var(–danger); color: var(–danger); }
+
+.section-title { font-family: ‘Playfair Display’, serif; font-size: 1.1rem; font-weight: 600; color: var(–soil); border-bottom: 2px solid var(–wheat); padding-bottom: 6px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+/* ============================================================
+MODULE SEMIS MAÏS
+============================================================ */
+#semis-module {
+background: white;
+border: 2px solid var(–maize);
+border-radius: 4px;
+margin-bottom: 28px;
+overflow: hidden;
+}
+
+.semis-header {
+background: linear-gradient(135deg, #3a2a08, #5c4010);
+padding: 16px 22px;
+display: flex;
+align-items: center;
+gap: 16px;
+flex-wrap: wrap;
+}
+
+.semis-header-title {
+font-family: ‘Playfair Display’, serif;
+font-size: 1.15rem;
+font-weight: 700;
+color: var(–maize);
+flex: 1;
+}
+
+.semis-header-title small {
+display: block;
+font-family: ‘DM Mono’, monospace;
+font-size: 0.62rem;
+font-weight: 400;
+color: #c8a860;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+margin-top: 2px;
+}
+
+/* FEU TRICOLORE */
+.semis-feu {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 4px;
+flex-shrink: 0;
+}
+
+.feu-light-wrap {
+background: #1a1208;
+border-radius: 20px;
+padding: 6px 8px;
+display: flex;
+flex-direction: column;
+gap: 5px;
+border: 2px solid #3a3020;
+}
+
+.feu-light {
+width: 22px; height: 22px;
+border-radius: 50%;
+opacity: 0.15;
+transition: opacity 0.4s, box-shadow 0.4s;
+}
+
+.feu-light.rouge  { background: #e74c3c; }
+.feu-light.orange { background: #f39c12; }
+.feu-light.vert   { background: #27ae60; }
+
+.feu-light.on.rouge  { opacity: 1; box-shadow: 0 0 10px #e74c3c88; }
+.feu-light.on.orange { opacity: 1; box-shadow: 0 0 10px #f39c1288; }
+.feu-light.on.vert   { opacity: 1; box-shadow: 0 0 10px #27ae6088; }
+
+.feu-label {
+font-family: ‘DM Mono’, monospace;
+font-size: 0.65rem;
+font-weight: 500;
+text-align: center;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+}
+
+.feu-label.rouge  { color: #e74c3c; }
+.feu-label.orange { color: #f39c12; }
+.feu-label.vert   { color: #27ae60; }
+
+.semis-verdict {
+flex: 1;
+padding: 4px 0;
+}
+
+.verdict-title {
+font-family: ‘Playfair Display’, serif;
+font-size: 1.3rem;
+font-weight: 700;
+margin-bottom: 4px;
+}
+
+.verdict-title.rouge  { color: #e74c3c; }
+.verdict-title.orange { color: #f5b642; }
+.verdict-title.vert   { color: var(–green-light); }
+
+.verdict-detail {
+font-family: ‘DM Mono’, monospace;
+font-size: 0.72rem;
+color: #c8a860;
+line-height: 1.5;
+}
+
+/* CRITÈRES */
+.semis-criteres {
+padding: 16px 22px;
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 12px;
+border-bottom: 1px solid #f0e8d0;
+}
+
+.critere-card {
+border-radius: 3px;
+padding: 12px 14px;
+border: 1px solid #e8dfcf;
+position: relative;
+}
+
+.critere-card.ok    { border-left: 4px solid var(–green); background: #f0faf2; }
+.critere-card.warn  { border-left: 4px solid var(–sun); background: #fffbf0; }
+.critere-card.block { border-left: 4px solid var(–danger); background: #fff5f5; }
+.critere-card.na    { border-left: 4px solid #ccc; background: #fafafa; }
+
+.critere-icon { font-size: 1.4rem; margin-bottom: 4px; }
+.critere-label { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(–muted); margin-bottom: 4px; }
+.critere-value { font-family: ‘Playfair Display’, serif; font-size: 1.3rem; font-weight: 700; color: var(–soil); }
+.critere-status { font-family: ‘DM Mono’, monospace; font-size: 0.65rem; margin-top: 3px; }
+.critere-card.ok    .critere-status { color: var(–green); }
+.critere-card.warn  .critere-status { color: #c07800; }
+.critere-card.block .critere-status { color: var(–danger); }
+.critere-card.na    .critere-status { color: var(–muted); }
+
+/* GRAPHIQUE TEMPÉRATURE SOL */
+.semis-graph-section {
+padding: 16px 22px 20px;
+}
+
+.semis-graph-title {
+font-family: ‘DM Mono’, monospace;
+font-size: 0.7rem;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+color: var(–muted);
+margin-bottom: 12px;
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.graph-legend {
+display: flex;
+gap: 16px;
+margin-left: auto;
+flex-wrap: wrap;
+}
+
+.legend-item {
+display: flex;
+align-items: center;
+gap: 5px;
+font-size: 0.62rem;
+color: var(–muted);
+}
+
+.legend-dot {
+width: 10px; height: 3px; border-radius: 2px;
+}
+
+.soil-chart-wrap {
+position: relative;
+height: 140px;
+background: #fdfaf5;
+border: 1px solid #e8dfcf;
+border-radius: 3px;
+overflow: hidden;
+}
+
+/* SVG chart drawn by JS */
+.soil-chart-wrap svg {
+width: 100%; height: 100%;
+}
+
+/* Threshold line label */
+.threshold-label {
+position: absolute;
+right: 6px;
+font-family: ‘DM Mono’, monospace;
+font-size: 0.58rem;
+color: var(–danger);
+font-weight: 600;
+}
+
+.semis-graph-sub {
+font-family: ‘DM Mono’, monospace;
+font-size: 0.62rem;
+color: var(–muted);
+margin-top: 6px;
+text-align: center;
+font-style: italic;
+}
+
+/* CONSEILS SEMIS */
+.semis-conseils {
+padding: 0 22px 16px;
+}
+.semis-conseil-item {
+font-size: 0.82rem;
+color: var(–text);
+padding: 5px 0;
+border-bottom: 1px solid #ede8e0;
+display: flex;
+gap: 8px;
+align-items: flex-start;
+}
+.semis-conseil-item:last-child { border-bottom: none; }
+.semis-conseil-item::before { content: ‘▸’; color: var(–maize); flex-shrink: 0; margin-top: 1px; }
+
+/* DATE CIBLE */
+.semis-target {
+margin: 0 22px 16px;
+background: linear-gradient(135deg, #fef9ef, #fdf0d0);
+border: 1px solid var(–maize);
+border-radius: 3px;
+padding: 12px 16px;
+display: flex;
+align-items: center;
+gap: 14px;
+}
+
+.target-icon { font-size: 2rem; flex-shrink: 0; }
+
+.target-text .target-label {
+font-family: ‘DM Mono’, monospace;
+font-size: 0.62rem;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+color: var(–muted);
+}
+
+.target-text .target-date {
+font-family: ‘Playfair Display’, serif;
+font-size: 1.2rem;
+font-weight: 700;
+color: var(–maize-dark);
+margin-top: 2px;
+}
+
+.target-text .target-range {
+font-family: ‘DM Mono’, monospace;
+font-size: 0.68rem;
+color: var(–muted);
+margin-top: 2px;
+}
+
+/* 7-DAY FORECAST */
+#forecast-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 6px; }
+.day-card { background: white; border-radius: 3px; padding: 14px 10px; text-align: center; border: 1px solid #e8dfcf; border-top: 3px solid transparent; transition: transform 0.15s, box-shadow 0.15s; }
+.day-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(61,43,31,0.1); }
+.day-card.today { border-top-color: var(–wheat); background: #fef9ef; }
+.day-card.rain-risk { border-top-color: var(–rain); }
+.day-card.good-day { border-top-color: var(–green); }
+.day-name { font-family: ‘DM Mono’, monospace; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(–muted); margin-bottom: 8px; }
+.day-card.today .day-name { color: var(–soil); font-weight: 700; }
+.day-icon { font-size: 1.8rem; margin: 6px 0; }
+.day-temps { display: flex; justify-content: center; gap: 6px; margin: 6px 0; }
+.temp-max { font-family: ‘Playfair Display’, serif; font-weight: 700; font-size: 1.1rem; color: var(–text); }
+.temp-min { font-size: 0.9rem; color: var(–muted); align-self: flex-end; }
+.day-rain { font-family: ‘DM Mono’, monospace; font-size: 0.7rem; color: var(–rain); margin-top: 4px; }
+.day-rain.no-rain { color: var(–green); }
+.day-etp { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; color: var(–muted); margin-top: 4px; }
+.day-wind { font-family: ‘DM Mono’, monospace; font-size: 0.65rem; color: #9a8060; margin-top: 3px; }
+
+/* CONFIDENCE RULER */
+.conf-label-row { display: flex; font-family: ‘DM Mono’, monospace; font-size: 0.6rem; color: var(–muted); margin-bottom: 3px; margin-top: 10px; }
+.conf-label-row span { flex: 1; }
+.conf-label-row span:last-child { text-align: right; }
+.conf-label-row span:nth-child(2) { text-align: center; }
+.confidence-ruler { display: flex; height: 5px; border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
+.conf-seg.high   { background: var(–green); flex: 7; }
+.conf-seg.medium { background: var(–wheat); flex: 3; }
+.conf-seg.low    { background: #c8a070; flex: 3; }
+.conf-seg.vlow   { background: #ddc090; flex: 3; opacity: 0.55; }
+
+/* TENDANCES */
+.tendances-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 9px 14px; background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(154,144,128,0.05) 6px, rgba(154,144,128,0.05) 12px); border: 1px dashed #c8b89a; border-radius: 3px; flex-wrap: wrap; }
+.tendances-badge { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; background: var(–fog); color: white; padding: 3px 8px; border-radius: 2px; flex-shrink: 0; }
+.tendances-disclaimer { font-family: ‘DM Mono’, monospace; font-size: 0.67rem; color: var(–muted); font-style: italic; flex: 1; }
+.fiab-wrap { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.fiab-dot { width: 8px; height: 8px; border-radius: 50%; }
+.fiab-dot.on { background: var(–wheat); }
+.fiab-dot.off { background: #ddd; }
+.fiab-label { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; color: var(–muted); }
+
+#tendances-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 7px; margin-bottom: 28px; }
+.tend-card { background: white; border-radius: 3px; padding: 11px 7px; text-align: center; border: 1px dashed #d5cdbf; border-top: 3px solid #cdc5b5; position: relative; overflow: hidden; transition: opacity 0.15s; }
+.tend-card:hover { opacity: 1 !important; }
+.tend-card.tend-rain { border-top-color: #8aadc8; }
+.tend-card.tend-dry  { border-top-color: #96b878; }
+#tendances-grid .tend-card:nth-child(1) { opacity: 0.82; }
+#tendances-grid .tend-card:nth-child(2) { opacity: 0.76; }
+#tendances-grid .tend-card:nth-child(3) { opacity: 0.70; }
+#tendances-grid .tend-card:nth-child(4) { opacity: 0.64; }
+#tendances-grid .tend-card:nth-child(5) { opacity: 0.58; }
+#tendances-grid .tend-card:nth-child(6) { opacity: 0.51; }
+#tendances-grid .tend-card:nth-child(7) { opacity: 0.44; }
+#tendances-grid .tend-card:nth-child(8) { opacity: 0.38; }
+#tendances-grid .tend-card:nth-child(9) { opacity: 0.32; }
+.tend-uncertainty { position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(180,168,150,0.07) 5px, rgba(180,168,150,0.07) 10px); pointer-events: none; }
+.tend-name { font-family: ‘DM Mono’, monospace; font-size: 0.63rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: #9a8878; margin-bottom: 5px; }
+.tend-icon { font-size: 1.45rem; margin: 3px 0; filter: grayscale(25%); }
+.tend-temps { display: flex; justify-content: center; gap: 4px; margin: 4px 0; }
+.tend-tmax { font-family: ‘Playfair Display’, serif; font-weight: 700; font-size: 0.98rem; color: #5a4a3a; }
+.tend-tmin { font-size: 0.8rem; color: #9a8878; align-self: flex-end; }
+.tend-rain-val { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; color: #7090b0; margin-top: 2px; }
+.tend-rain-val.dry { color: #7aaa60; }
+
+/* CONSEIL */
+#conseil-box { background: linear-gradient(135deg, #f0ede6, white); border: 1px solid #ddd4c0; border-left: 5px solid var(–green); border-radius: 3px; padding: 16px 20px; margin-bottom: 24px; }
+.conseil-title { font-family: ‘Playfair Display’, serif; font-size: 1rem; font-weight: 600; color: var(–green); margin-bottom: 10px; }
+.conseil-list { list-style: none; }
+.conseil-list li { font-size: 0.85rem; color: var(–text); padding: 5px 0; border-bottom: 1px solid #ede8e0; display: flex; gap: 8px; }
+.conseil-list li:last-child { border-bottom: none; }
+.conseil-list li::before { content: ‘▸’; color: var(–wheat); flex-shrink: 0; margin-top: 1px; }
+
+/* AGRO */
+#agro-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.agro-card { background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 16px 18px; }
+.agro-label { font-family: ‘DM Mono’, monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(–muted); margin-bottom: 6px; }
+.agro-value { font-family: ‘Playfair Display’, serif; font-size: 1.8rem; font-weight: 700; color: var(–soil); line-height: 1; }
+.agro-unit { font-family: ‘DM Mono’, monospace; font-size: 0.7rem; color: var(–muted); margin-top: 4px; }
+.agro-bar { height: 4px; background: #e8dfcf; border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.agro-bar-fill { height: 100%; border-radius: 2px; background: var(–wheat); }
+.agro-bar-fill.green { background: var(–green); }
+.agro-bar-fill.rain { background: var(–rain); }
+.agro-bar-fill.danger { background: var(–danger); }
+.agro-interpretation { font-size: 0.72rem; color: var(–muted); margin-top: 6px; }
+
+/* TABS */
+.tabs { display: flex; margin-bottom: 16px; border-bottom: 2px solid #e8dfcf; }
+.tab-btn { font-family: ‘DM Mono’, monospace; font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 18px; background: none; border: none; cursor: pointer; color: var(–muted); border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.tab-btn.active { color: var(–soil); border-bottom-color: var(–wheat); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* HOURLY */
+.hourly-scroll { overflow-x: auto; padding-bottom: 8px; }
+.hourly-chart { display: flex; min-width: 800px; align-items: flex-end; height: 120px; background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 12px 8px 8px; }
+.hourly-col { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+.hourly-bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; justify-content: center; }
+.hourly-bar { width: 70%; border-radius: 2px 2px 0 0; background: var(–sky-deep); opacity: 0.7; min-height: 2px; }
+.hourly-time { font-family: ‘DM Mono’, monospace; font-size: 0.55rem; color: var(–muted); margin-top: 4px; }
+.hourly-temp { font-family: ‘DM Mono’, monospace; font-size: 0.6rem; font-weight: 500; color: var(–soil); position: absolute; top: -16px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+
+/* RAIN */
+.rain-bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 10px 12px 8px; }
+.rain-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.rain-bar-val { font-family: ‘DM Mono’, monospace; font-size: 0.6rem; color: var(–rain); }
+.rain-bar-fill { width: 100%; background: var(–rain); border-radius: 2px 2px 0 0; opacity: 0.75; min-height: 2px; }
+.rain-bar-day { font-family: ‘DM Mono’, monospace; font-size: 0.6rem; color: var(–muted); }
+
+footer { text-align: center; font-family: ‘DM Mono’, monospace; font-size: 0.65rem; color: #bbb; padding: 20px; border-top: 1px solid #e8dfcf; margin-top: 12px; }
+
+@media (max-width: 960px) { #forecast-grid { grid-template-columns: repeat(4, 1fr); } #tendances-grid { grid-template-columns: repeat(5, 1fr); } #agro-grid { grid-template-columns: repeat(2, 1fr); } .semis-criteres { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 580px) { #forecast-grid { grid-template-columns: repeat(3, 1fr); } #tendances-grid { grid-template-columns: repeat(3, 1fr); } .semis-criteres { grid-template-columns: 1fr 1fr; } }
+
+.fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
+@keyframes fadeIn { to { opacity: 1; } }
+</style>
+
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">🌾 Météo <span>La Roulandière</span></div>
+    <div class="subtitle">Tableau de bord météo agriculteur</div>
+  </div>
+  <div class="location-badge">📍 Courgains — Sarthe (72)</div>
+</header>
+
+<main>
+  <div id="loading"><div class="spinner"></div>Chargement des données météo et du sol…</div>
+
+  <div id="content" style="display:none">
+
+```
+<div id="alerts-container"></div>
+
+<!-- CURRENT -->
+<div id="current-banner" class="fade-in">
+  <div class="current-temp" id="cur-temp">--<sup>°</sup></div>
+  <div class="current-desc">
+    <div class="date-now" id="cur-date"></div>
+    <div class="weather-label" id="cur-label">--</div>
+    <div class="current-meta" id="cur-meta"></div>
+  </div>
+</div>
+
+<!-- CONSEILS DU JOUR -->
+<div id="conseil-box">
+  <div class="conseil-title">🌱 Conseils parcelle du jour</div>
+  <ul class="conseil-list" id="conseil-list"></ul>
+</div>
+
+<!-- ==============================
+     MODULE FENÊTRE SEMIS MAÏS
+=============================== -->
+<div id="semis-module">
+  <div class="semis-header">
+    <div class="semis-header-title">
+      🌽 Fenêtre Semis Maïs
+      <small>Analyse en temps réel — seuil 10°C à 10 cm · 5 jours consécutifs</small>
+    </div>
+    <!-- Feu tricolore -->
+    <div class="semis-feu">
+      <div class="feu-light-wrap">
+        <div class="feu-light rouge" id="feu-rouge"></div>
+        <div class="feu-light orange" id="feu-orange"></div>
+        <div class="feu-light vert" id="feu-vert"></div>
+      </div>
+    </div>
+    <div class="semis-verdict">
+      <div class="verdict-title" id="verdict-title">Analyse…</div>
+      <div class="verdict-detail" id="verdict-detail"></div>
+    </div>
+  </div>
+
+  <!-- CRITÈRES -->
+  <div class="semis-criteres" id="semis-criteres"></div>
+
+  <!-- DATE CIBLE -->
+  <div class="semis-target" id="semis-target"></div>
+
+  <!-- GRAPHIQUE SOL -->
+  <div class="semis-graph-section">
+    <div class="semis-graph-title">
+      Température du sol à 6 cm — passé (7j) + prévision (7j)
+      <div class="graph-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#8b6914"></div>T° sol 6cm</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e8b84b;opacity:0.6"></div>T° sol 6cm (prévision)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e74c3c;border-top: 2px dashed #e74c3c;height:0"></div>Seuil 10°C</div>
+      </div>
+    </div>
+    <div class="soil-chart-wrap" id="soil-chart-wrap">
+      <svg id="soil-svg" viewBox="0 0 800 140" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="semis-graph-sub" id="soil-graph-sub"></div>
+  </div>
+
+  <!-- CONSEILS SEMIS -->
+  <div class="semis-conseils" id="semis-conseils-list"></div>
+</div>
+
+<!-- PREVISIONS 7 JOURS -->
+<div class="section-title">📅 Prévisions fiables — 7 jours</div>
+<div id="forecast-grid"></div>
+
+<!-- CONFIDENCE RULER -->
+<div class="conf-label-row">
+  <span>← Fiable (J+1)</span><span>J+7 / J+8</span><span>Tendances (J+16) →</span>
+</div>
+<div class="confidence-ruler">
+  <div class="conf-seg high"></div><div class="conf-seg medium"></div><div class="conf-seg low"></div><div class="conf-seg vlow"></div>
+</div>
+
+<!-- TENDANCES -->
+<div class="tendances-header">
+  <span class="tendances-badge">⚠ Tendances J+8 → J+16</span>
+  <span class="tendances-disclaimer">Ordre de grandeur uniquement — tendance sèche/humide et fourchette de températures.</span>
+  <div class="fiab-wrap">
+    <div class="fiab-dot on"></div><div class="fiab-dot on"></div><div class="fiab-dot off"></div><div class="fiab-dot off"></div><div class="fiab-dot off"></div>
+    <span class="fiab-label">Fiabilité 2/5</span>
+  </div>
+</div>
+<div id="tendances-grid"></div>
+
+<!-- ONGLETS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('agro',event)">Indicateurs agro</button>
+  <button class="tab-btn" onclick="switchTab('hourly',event)">Heure par heure</button>
+  <button class="tab-btn" onclick="switchTab('rain',event)">Cumuls pluie</button>
+</div>
+<div id="tab-agro" class="tab-panel active"><div id="agro-grid"></div></div>
+<div id="tab-hourly" class="tab-panel"><div class="hourly-scroll"><div class="hourly-chart" id="hourly-chart"></div></div></div>
+<div id="tab-rain" class="tab-panel"><div class="rain-bars" id="rain-bars"></div></div>
+```
+
+  </div>
+</main>
+
+<footer>Données météo : Open-Meteo (ECMWF) · Température sol : modèle ERA5-Land · 48.30°N 0.27°E · Actualisé automatiquement</footer>
+
+<script>
+const LAT = 48.30, LON = 0.27;
+const SEUIL_SOL = 10; // °C
+const DAYS_CONSEC = 5; // jours consécutifs requis
+
+const WMO = { 0:['☀️','Dégagé'],1:['🌤️','Peu nuageux'],2:['⛅','Nuageux'],3:['☁️','Couvert'],45:['🌫️','Brouillard'],48:['🌫️','Brouillard givrant'],51:['🌦️','Bruine légère'],53:['🌦️','Bruine'],55:['🌧️','Bruine dense'],61:['🌧️','Pluie légère'],63:['🌧️','Pluie'],65:['🌧️','Pluie forte'],71:['❄️','Neige légère'],73:['❄️','Neige'],75:['❄️','Neige forte'],80:['🌦️','Averses'],81:['🌧️','Averses mod.'],82:['⛈️','Averses fortes'],95:['⛈️','Orage'],96:['⛈️','Orage+grêle'],99:['⛈️','Orage violent'] };
+const wmo = c => WMO[c] || ['🌡️','Variable'];
+const DAYS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MONTHS = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+const MONTHS_LONG = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+function fmtLong(s) {
+  const d = new Date(s);
+  return ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+}
+function wdir(deg) { return ['N','NE','E','SE','S','SO','O','NO'][Math.round(deg/45)%8]; }
+
+// --- Compute daily average soil temp from hourly ---
+function dailySoilAvg(hourlyTimes, hourlyTemps, dateStr) {
+  const vals = [];
+  for (let i = 0; i < hourlyTimes.length; i++) {
+    if (hourlyTimes[i].startsWith(dateStr)) vals.push(hourlyTemps[i]);
+  }
+  if (!vals.length) return null;
+  return vals.reduce((a,b) => a+b, 0) / vals.length;
+}
+
+// --- Find first date when 5 consecutive days have avg > 10°C ---
+function findSemisDate(allDates, allAvgSoil) {
+  let streak = 0;
+  for (let i = 0; i < allAvgSoil.length; i++) {
+    if (allAvgSoil[i] !== null && allAvgSoil[i] >= SEUIL_SOL) {
+      streak++;
+      if (streak >= DAYS_CONSEC) {
+        return allDates[i - DAYS_CONSEC + 1];
+      }
+    } else {
+      streak = 0;
+    }
+  }
+  return null;
+}
+
+function conseils(daily, cw) {
+  const out = [];
+  const [r0,r1] = daily.precipitation_sum;
+  const pr0 = daily.precipitation_probability_max[0];
+  const etp0 = daily.et0_fao_evapotranspiration[0];
+  const wnd = daily.wind_speed_10m_max[0];
+  const tmax = daily.temperature_2m_max[0];
+  const tmin = daily.temperature_2m_min[0];
+  const wc = daily.weathercode[0];
+  if (tmin <= 0) out.push(`⚠️ Risque de gel cette nuit (${tmin}°C) — protéger les cultures sensibles`);
+  if (pr0 < 30 && wnd < 20) out.push(`✅ Bonnes conditions pour les traitements phyto — vent < 20 km/h, pluie < 30%`);
+  else if (pr0 >= 60 || r0 > 2) out.push(`🚫 Éviter les traitements phyto — risque pluie ${pr0}% / ${r0} mm prévu`);
+  else if (wnd >= 20) out.push(`⚠️ Vent soutenu (${wnd} km/h) — report des traitements conseillé`);
+  if (etp0 > 3.5) out.push(`💧 ETP élevée (${etp0.toFixed(1)} mm) — surveiller le bilan hydrique`);
+  if (pr0 < 20 && tmax > 18 && [0,1,2].includes(wc)) out.push(`🌾 Journée favorable : travaux des sols, récolte, semis`);
+  if (r1 > 5 && r0 < 1) out.push(`🌧️ Pluie utile attendue demain (${r1} mm)`);
+  if (r0 > 5 || r1 > 5) out.push(`🐄 Reporter les épandages organiques — risque de lessivage`);
+  if ([45,48].includes(wc)) out.push(`🌫️ Brouillard — vigilance pour les engins agricoles`);
+  if (tmax > 30) out.push(`🔥 Forte chaleur (${tmax}°C) — surveiller l'abreuvement des animaux`);
+  if (!out.length) out.push('🌤️ Conditions normales — journée sans contrainte météo particulière');
+  return out;
+}
+
+async function load() {
+  try {
+    // Get past 7 days + forecast 16 days
+    const today = new Date();
+    const past7 = new Date(today); past7.setDate(today.getDate() - 7);
+    const past7str = past7.toISOString().slice(0,10);
+
+    // Main forecast (16 days ahead)
+    const urlForecast = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`
+      + `&hourly=temperature_2m,precipitation,wind_speed_10m,weathercode,soil_temperature_6cm`
+      + `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,et0_fao_evapotranspiration,weathercode,precipitation_probability_max`
+      + `&current_weather=true&forecast_days=16&timezone=Europe%2FParis`;
+
+    // Historical last 7 days for soil temp chart
+    const urlHistory = `https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}`
+      + `&hourly=soil_temperature_6cm`
+      + `&start_date=${past7str}&end_date=${today.toISOString().slice(0,10)}`
+      + `&timezone=Europe%2FParis`;
+
+    const [forecastData, histData] = await Promise.all([
+      fetch(urlForecast).then(r => r.json()),
+      fetch(urlHistory).then(r => r.json()),
+    ]);
+
+    render(forecastData, histData);
+  } catch(e) {
+    console.error(e);
+    document.getElementById('loading').innerHTML = '<p style="color:var(--danger)">❌ Impossible de charger les données météo.<br><small>Vérifiez votre connexion internet.</small></p>';
+  }
+}
+
+function render(data, histData) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+
+  const cw = data.current_weather, daily = data.daily, hourly = data.hourly;
+
+  // CURRENT
+  document.getElementById('cur-temp').innerHTML = `${Math.round(cw.temperature)}<sup>°</sup>`;
+  document.getElementById('cur-date').textContent = fmtLong(daily.time[0]);
+  document.getElementById('cur-label').textContent = wmo(cw.weathercode)[1] + ' ' + wmo(cw.weathercode)[0];
+  document.getElementById('cur-meta').innerHTML = `
+    <div class="stat">🌡 Min/Max<br><strong>${Math.round(daily.temperature_2m_min[0])}° / ${Math.round(daily.temperature_2m_max[0])}°</strong></div>
+    <div class="stat">💨 Vent<br><strong>${Math.round(cw.windspeed)} km/h ${wdir(cw.winddirection)}</strong></div>
+    <div class="stat">🌧 Pluie J<br><strong>${daily.precipitation_sum[0]} mm</strong></div>
+    <div class="stat">🌱 ETP J<br><strong>${daily.et0_fao_evapotranspiration[0].toFixed(1)} mm</strong></div>
+  `;
+
+  // ALERTES
+  const alerts = [];
+  if (daily.temperature_2m_min[0] <= 0) alerts.push({type:'danger', msg:`❄️ ALERTE GEL — Tmin prévue : ${daily.temperature_2m_min[0]}°C`});
+  if (daily.wind_speed_10m_max[0] >= 50) alerts.push({type:'danger', msg:`💨 ALERTE VENT — Rafales jusqu'à ${daily.wind_speed_10m_max[0]} km/h`});
+  if (daily.precipitation_sum[0] >= 20) alerts.push({type:'danger', msg:`🌊 ALERTE PLUIE INTENSE — ${daily.precipitation_sum[0]} mm aujourd'hui`});
+  if (daily.weathercode[0] >= 95) alerts.push({type:'danger', msg:`⛈️ ALERTE ORAGE`});
+  document.getElementById('alerts-container').innerHTML = alerts.map(a=>`<div class="alert-box ${a.type}">${a.msg}</div>`).join('');
+
+  // CONSEILS
+  document.getElementById('conseil-list').innerHTML = conseils(daily, cw).map(c=>`<li>${c}</li>`).join('');
+
+  // ================================================================
+  // MODULE SEMIS MAÏS
+  // ================================================================
+
+  // Build soil temp series: 7 past days (historical) + 7 forecast days
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0,10);
+
+  // Past 7 days daily averages (from history API)
+  const pastDates = [], pastAvgs = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    const ds = d.toISOString().slice(0,10);
+    pastDates.push(ds);
+    const avg = dailySoilAvg(histData.hourly.time, histData.hourly.soil_temperature_6cm, ds);
+    pastAvgs.push(avg !== null ? parseFloat(avg.toFixed(1)) : null);
+  }
+
+  // Forecast 7 days daily averages
+  const fcastDates = [], fcastAvgs = [];
+  for (let i = 0; i < 7; i++) {
+    const ds = daily.time[i];
+    const avg = dailySoilAvg(hourly.time, hourly.soil_temperature_6cm, ds);
+    fcastDates.push(ds);
+    fcastAvgs.push(avg !== null ? parseFloat(avg.toFixed(1)) : null);
+  }
+
+  // Current soil temp (latest hourly value)
+  const nowH = new Date().getHours();
+  const startIdx = hourly.time.findIndex(t => t.startsWith(todayStr) && parseInt(t.slice(11,13)) >= nowH);
+  const currentSoilTemp = startIdx >= 0 ? hourly.soil_temperature_6cm[startIdx] : fcastAvgs[0];
+
+  // Rolling 5-day average (using last 5 days of past + today)
+  const recent5 = pastAvgs.slice(-5).filter(v => v !== null);
+  const avg5 = recent5.length ? recent5.reduce((a,b)=>a+b,0) / recent5.length : null;
+
+  // Find first semis date in the 14-day window
+  const allDates = [...pastDates.slice(-3), ...fcastDates]; // last 3 past + 7 forecast = 10 days
+  const allAvgs = [...pastAvgs.slice(-3), ...fcastAvgs];
+  const semisDate = findSemisDate(allDates, allAvgs);
+
+  // Frost risk in next 10 days
+  const gelRisk = daily.temperature_2m_min.slice(0,10).some(t => t <= 0);
+  const minForecastGel = Math.min(...daily.temperature_2m_min.slice(0,10));
+
+  // Portance / précipitations
+  const rain3j = daily.precipitation_sum.slice(0,3).reduce((a,b)=>a+b,0);
+  const portanceOk = rain3j < 20;
+
+  // Determine feu tricolore
+  let feuColor, verdictTitle, verdictDetail;
+  const solOk = avg5 !== null && avg5 >= SEUIL_SOL;
+
+  if (gelRisk) {
+    feuColor = 'rouge';
+    verdictTitle = 'Ne pas semer — Gel prévu';
+    verdictDetail = `Gel attendu dans les 10 prochains jours (Tmin ${minForecastGel}°C)\nAttendre la fin du risque gel avant tout semis`;
+  } else if (!solOk) {
+    const manque = avg5 !== null ? (SEUIL_SOL - avg5).toFixed(1) : '?';
+    feuColor = 'rouge';
+    verdictTitle = 'Sol trop froid — Attendre';
+    verdictDetail = `Moy. 5j sol à 6cm : ${avg5 !== null ? avg5.toFixed(1) : '?'}°C (seuil 10°C)\nIl manque encore ${manque}°C en moyenne`;
+  } else if (!portanceOk) {
+    feuColor = 'orange';
+    verdictTitle = 'Sol chaud mais terrain détrempé';
+    verdictDetail = `T° sol favorable (${avg5.toFixed(1)}°C) mais ${rain3j.toFixed(0)} mm sur 3j\nAttendre le ressuyage avant de lancer le tracteur`;
+  } else {
+    feuColor = 'vert';
+    verdictTitle = 'Conditions favorables — Vous pouvez semer';
+    verdictDetail = `T° sol ≥ 10°C depuis ${DAYS_CONSEC}j · Portance correcte · Pas de gel prévu`;
+  }
+
+  // Allumer le bon feu
+  document.getElementById('feu-rouge').classList.toggle('on', feuColor === 'rouge');
+  document.getElementById('feu-orange').classList.toggle('on', feuColor === 'orange');
+  document.getElementById('feu-vert').classList.toggle('on', feuColor === 'vert');
+
+  const vt = document.getElementById('verdict-title');
+  vt.textContent = verdictTitle;
+  vt.className = `verdict-title ${feuColor}`;
+  document.getElementById('verdict-detail').textContent = verdictDetail;
+
+  // CRITÈRES CARDS
+  const criteres = [
+    {
+      icon: '🌡',
+      label: 'T° sol 6cm maintenant',
+      value: currentSoilTemp !== null ? currentSoilTemp.toFixed(1) + '°C' : '--',
+      status: currentSoilTemp >= SEUIL_SOL ? '✓ Seuil 10°C atteint' : `Seuil 10°C : +${(SEUIL_SOL - currentSoilTemp).toFixed(1)}°C manquants`,
+      cls: currentSoilTemp >= SEUIL_SOL ? 'ok' : 'block'
+    },
+    {
+      icon: '📈',
+      label: 'Moy. 5 derniers jours',
+      value: avg5 !== null ? avg5.toFixed(1) + '°C' : '--',
+      status: solOk ? '✓ ≥ 10°C sur 5j' : `Besoin encore ${avg5 !== null ? (SEUIL_SOL - avg5).toFixed(1) : '?'}°C de plus`,
+      cls: solOk ? 'ok' : 'block'
+    },
+    {
+      icon: '❄️',
+      label: 'Risque gel 10 jours',
+      value: gelRisk ? `${minForecastGel}°C` : 'Aucun',
+      status: gelRisk ? `⚠ Gel prévu — attendre` : '✓ Pas de gel prévu',
+      cls: gelRisk ? 'block' : 'ok'
+    },
+    {
+      icon: '🚜',
+      label: 'Portance sol (pluie 3j)',
+      value: rain3j.toFixed(0) + ' mm',
+      status: portanceOk ? '✓ Sol ressuyé acceptable' : '⚠ Sol détrempé — attendre',
+      cls: portanceOk ? 'ok' : 'warn'
+    },
+  ];
+
+  document.getElementById('semis-criteres').innerHTML = criteres.map(c => `
+    <div class="critere-card ${c.cls}">
+      <div class="critere-icon">${c.icon}</div>
+      <div class="critere-label">${c.label}</div>
+      <div class="critere-value">${c.value}</div>
+      <div class="critere-status">${c.status}</div>
+    </div>
+  `).join('');
+
+  // DATE CIBLE
+  const targetEl = document.getElementById('semis-target');
+  if (feuColor === 'vert') {
+    targetEl.innerHTML = `<div class="target-icon">✅</div><div class="target-text"><div class="target-label">Fenêtre de semis</div><div class="target-date" style="color:var(--green)">Conditions réunies maintenant</div><div class="target-range">Semer dès que la météo des 3 prochains jours le permet</div></div>`;
+  } else if (semisDate) {
+    const sd = new Date(semisDate);
+    targetEl.innerHTML = `<div class="target-icon">🎯</div><div class="target-text"><div class="target-label">Date cible estimée (si tendance confirmée)</div><div class="target-date">${DAYS[sd.getDay()]} ${sd.getDate()} ${MONTHS_LONG[sd.getMonth()]}</div><div class="target-range">Vérifier à nouveau à J-3 avant de déclencher</div></div>`;
+  } else {
+    // Estimate based on typical Sarthe dates
+    const estimYear = today.getFullYear();
+    const estimate = new Date(estimYear, 3, 20 + Math.floor(Math.random()*15)); // late April rough estimate
+    targetEl.innerHTML = `<div class="target-icon">📅</div><div class="target-text"><div class="target-label">Fenêtre estimée pour la Sarthe</div><div class="target-date" style="color:var(--maize-dark)">Fin avril — début mai ${estimYear}</div><div class="target-range">Suivre l'évolution T° sol à partir du 10 avril</div></div>`;
+  }
+
+  // SVG GRAPH
+  renderSoilChart(pastDates, pastAvgs, fcastDates, fcastAvgs);
+
+  // GRAPH sub-label
+  const lastPast = pastAvgs.filter(v=>v!==null);
+  const lastVal = lastPast[lastPast.length-1];
+  document.getElementById('soil-graph-sub').textContent =
+    `Moy. 5j : ${avg5 !== null ? avg5.toFixed(1) : '--'}°C · Valeur actuelle : ${currentSoilTemp !== null ? currentSoilTemp.toFixed(1) : '--'}°C · Source : Open-Meteo ERA5-Land modélisé`;
+
+  // CONSEILS SEMIS
+  const semisConseils = [];
+  if (feuColor === 'rouge' && gelRisk) semisConseils.push(`Gel prévu dans les 10 jours : un semis précoce risque la perte totale en cas de gelée tardive`);
+  if (feuColor === 'rouge' && !solOk) semisConseils.push(`Un semis avec T° sol < 10°C ralentit la germination et favorise les fontes de semis (Pythium, Fusarium)`);
+  semisConseils.push(`Privilégier une variété précoce à indice FAO 200-230 pour la Sarthe — meilleure tolérance au froid`);
+  semisConseils.push(`Vérifier la densité de semis : 85 000 à 95 000 grains/ha selon l'objectif (grain ou ensilage)`);
+  if (rain3j > 15) semisConseils.push(`Sol humide : risquer une date trop tôt détériore la structure — attendre le ressuyage`);
+  semisConseils.push(`Surveiller la T° sol chaque matin pendant 5 jours avant de décider — un thermomètre de sol (5-10€) est l'outil le plus fiable`);
+
+  document.getElementById('semis-conseils-list').innerHTML = semisConseils.map(c => `
+    <div class="semis-conseil-item">${c}</div>
+  `).join('');
+
+  // ================================================================
+  // FORECAST 7J
+  // ================================================================
+  document.getElementById('forecast-grid').innerHTML = daily.time.slice(0,7).map((d,i) => {
+    const rain = daily.precipitation_sum[i];
+    const prob = daily.precipitation_probability_max[i];
+    const [icon] = wmo(daily.weathercode[i]);
+    let cls = i===0 ? 'today' : (rain>3||prob>60) ? 'rain-risk' : (prob<20&&daily.temperature_2m_max[i]>12) ? 'good-day' : '';
+    return `<div class="day-card ${cls}">
+      <div class="day-name">${i===0?'Auj.':DAYS[new Date(d).getDay()]} ${new Date(d).getDate()}</div>
+      <div class="day-icon">${icon}</div>
+      <div class="day-temps"><span class="temp-max">${Math.round(daily.temperature_2m_max[i])}°</span><span class="temp-min">${Math.round(daily.temperature_2m_min[i])}°</span></div>
+      <div class="day-rain ${rain<1?'no-rain':''}">${rain<0.1?'— sec':'💧 '+rain+' mm'}${prob>10?'<br>('+prob+'%)':''}</div>
+      <div class="day-etp">ETP ${daily.et0_fao_evapotranspiration[i].toFixed(1)} mm</div>
+      <div class="day-wind">💨 ${Math.round(daily.wind_speed_10m_max[i])} km/h</div>
+    </div>`;
+  }).join('');
+
+  // TENDANCES
+  const tendLen = Math.min(daily.time.length - 7, 9);
+  document.getElementById('tendances-grid').innerHTML = Array.from({length: tendLen}, (_,i) => {
+    const idx = i + 7;
+    const rain = daily.precipitation_sum[idx];
+    const prob = daily.precipitation_probability_max[idx];
+    const [icon] = wmo(daily.weathercode[idx]);
+    const cls = (rain>3||prob>55) ? 'tend-rain' : (prob<25&&rain<1) ? 'tend-dry' : '';
+    const dd = new Date(daily.time[idx]);
+    return `<div class="tend-card ${cls}">
+      ${i>=6?'<div class="tend-uncertainty"></div>':''}
+      <div class="tend-name">${DAYS[dd.getDay()]} ${dd.getDate()}</div>
+      <div class="tend-icon">${icon}</div>
+      <div class="tend-temps"><span class="tend-tmax">${Math.round(daily.temperature_2m_max[idx])}°</span><span class="tend-tmin">${Math.round(daily.temperature_2m_min[idx])}°</span></div>
+      <div class="tend-rain-val ${rain<1?'dry':''}">${rain<0.1?'— sec':'~'+rain+' mm'}${prob>10?' ('+prob+'%)':''}</div>
+    </div>`;
+  }).join('');
+
+  // AGRO
+  const rain7 = daily.precipitation_sum.slice(0,7).reduce((a,b)=>a+b,0);
+  const etp7  = daily.et0_fao_evapotranspiration.slice(0,7).reduce((a,b)=>a+b,0);
+  const bilan = rain7 - etp7;
+  const rdays = daily.precipitation_sum.slice(0,7).filter(r=>r>=1).length;
+  document.getElementById('agro-grid').innerHTML = [
+    {label:'Cumul pluie 7j', val:rain7.toFixed(0), unit:'mm', bar:Math.min(100,rain7/50*100), bc:rain7>30?'rain':'green', interp:rain7>40?'Semaine très humide':rain7>15?'Semaine correcte':'Semaine sèche'},
+    {label:'ETP 7 jours', val:etp7.toFixed(1), unit:'mm évapotranspiration', bar:Math.min(100,etp7/30*100), bc:etp7>20?'danger':'', interp:etp7>25?'Demande hydrique forte':etp7>15?'Demande modérée':'Faible demande hydrique'},
+    {label:'Bilan hydrique 7j', val:(bilan>=0?'+':'')+bilan.toFixed(0), unit:'mm (Pluie − ETP)', bar:Math.min(100,Math.max(0,(bilan+20)/40*100)), bc:bilan<-10?'danger':bilan>5?'rain':'green', interp:bilan>5?'Excédent hydrique':bilan<-10?'Déficit — surveiller':'Équilibre satisfaisant'},
+    {label:'Journées exploitables', val:7-rdays, unit:'jours sans pluie ≥1mm / 7', bar:(7-rdays)/7*100, bc:(7-rdays)>=5?'green':(7-rdays)<=1?'danger':'', interp:rdays>=5?'Semaine très perturbée':rdays<=1?'Semaine très sèche':rdays+' jour'+(rdays>1?'s':'')+' de pluie prévus'},
+  ].map(a=>`<div class="agro-card"><div class="agro-label">${a.label}</div><div class="agro-value">${a.val}</div><div class="agro-unit">${a.unit}</div><div class="agro-bar"><div class="agro-bar-fill ${a.bc}" style="width:${a.bar}%"></div></div><div class="agro-interpretation">${a.interp}</div></div>`).join('');
+
+  // HOURLY
+  const si = hourly.time.findIndex(t => t.startsWith(todayStr) && parseInt(t.slice(11,13)) >= new Date().getHours());
+  const hs = hourly.time.slice(si, si+24);
+  const ht = hourly.temperature_2m.slice(si, si+24);
+  const hp = hourly.precipitation.slice(si, si+24);
+  const maxP = Math.max(...hp, 0.5);
+  document.getElementById('hourly-chart').innerHTML = hs.map((t,i) => `
+    <div class="hourly-col">
+      <span class="hourly-temp">${Math.round(ht[i])}°</span>
+      <div class="hourly-bar-wrap"><div class="hourly-bar" style="height:${Math.round(hp[i]/maxP*60)}px"></div></div>
+      <div class="hourly-time">${String(parseInt(t.slice(11,13))).padStart(2,'0')}h</div>
+    </div>`).join('');
+
+  // RAIN BARS
+  const maxR = Math.max(...daily.precipitation_sum.slice(0,7), 1);
+  document.getElementById('rain-bars').innerHTML = daily.time.slice(0,7).map((d,i) => {
+    const r = daily.precipitation_sum[i];
+    return `<div class="rain-col"><div class="rain-bar-val">${r>0.1?r+'mm':'—'}</div><div class="rain-bar-fill" style="height:${Math.round(r/maxR*50)}px"></div><div class="rain-bar-day">${DAYS[new Date(d).getDay()]}</div></div>`;
+  }).join('');
+}
+
+// ================================================================
+// SVG SOIL CHART
+// ================================================================
+function renderSoilChart(pastDates, pastAvgs, fcastDates, fcastAvgs) {
+  const W = 800, H = 140, PAD = { top: 18, bottom: 24, left: 32, right: 10 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+
+  const allVals = [...pastAvgs, ...fcastAvgs].filter(v => v !== null);
+  const minV = Math.min(...allVals, SEUIL_SOL) - 1;
+  const maxV = Math.max(...allVals, SEUIL_SOL) + 1;
+
+  const allDates = [...pastDates, ...fcastDates];
+  const N = allDates.length;
+
+  function xOf(i) { return PAD.left + (i / (N - 1)) * chartW; }
+  function yOf(v) { return PAD.top + chartH - ((v - minV) / (maxV - minV)) * chartH; }
+
+  // Threshold Y
+  const threshY = yOf(SEUIL_SOL);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // Background zones
+  svg += `<rect x="${PAD.left}" y="${PAD.top}" width="${chartW}" height="${chartH}" fill="#fdfaf5"/>`;
+
+  // Grid lines
+  for (let t = Math.ceil(minV); t <= Math.floor(maxV); t += 2) {
+    const y = yOf(t);
+    svg += `<line x1="${PAD.left}" y1="${y}" x2="${W-PAD.right}" y2="${y}" stroke="#e8dfcf" stroke-width="0.5"/>`;
+    svg += `<text x="${PAD.left - 3}" y="${y + 3}" text-anchor="end" font-size="7" fill="#9a8878" font-family="DM Mono, monospace">${t}°</text>`;
+  }
+
+  // Threshold line
+  svg += `<line x1="${PAD.left}" y1="${threshY}" x2="${W-PAD.right}" y2="${threshY}" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.8"/>`;
+  svg += `<text x="${W-PAD.right-2}" y="${threshY - 3}" text-anchor="end" font-size="7" fill="#e74c3c" font-family="DM Mono,monospace">10°C</text>`;
+
+  // Separator past/forecast
+  const sepX = xOf(pastDates.length - 1);
+  svg += `<line x1="${sepX}" y1="${PAD.top}" x2="${sepX}" y2="${PAD.top+chartH}" stroke="#c8b89a" stroke-width="1" stroke-dasharray="3,3"/>`;
+  svg += `<text x="${sepX - 4}" y="${PAD.top + 9}" text-anchor="end" font-size="6.5" fill="#9a8878" font-family="DM Mono,monospace">passé</text>`;
+  svg += `<text x="${sepX + 4}" y="${PAD.top + 9}" text-anchor="start" font-size="6.5" fill="#9a8878" font-family="DM Mono,monospace">prévision</text>`;
+
+  // Fill area under forecast line
+  const fcastPoints = fcastAvgs.map((v, i) => {
+    const gi = pastDates.length + i;
+    return [xOf(gi), v !== null ? yOf(v) : null];
+  }).filter(p => p[1] !== null);
+
+  if (fcastPoints.length > 1) {
+    const areaPath = `M ${fcastPoints[0][0]},${PAD.top+chartH} ` +
+      fcastPoints.map(p => `L ${p[0]},${p[1]}`).join(' ') +
+      ` L ${fcastPoints[fcastPoints.length-1][0]},${PAD.top+chartH} Z`;
+    svg += `<path d="${areaPath}" fill="#e8b84b" opacity="0.12"/>`;
+  }
+
+  // Forecast line
+  const fcastLine = fcastAvgs.map((v,i) => {
+    const gi = pastDates.length + i;
+    if (v === null) return null;
+    return `${xOf(gi)},${yOf(v)}`;
+  }).filter(Boolean);
+  if (fcastLine.length > 1) {
+    svg += `<polyline points="${fcastLine.join(' ')}" fill="none" stroke="#e8b84b" stroke-width="2" stroke-dasharray="5,3" opacity="0.9"/>`;
+  }
+
+  // Fill area under past line
+  const pastPoints = pastAvgs.map((v, i) => {
+    if (v === null) return null;
+    return [xOf(i), yOf(v)];
+  }).filter(Boolean);
+
+  if (pastPoints.length > 1) {
+    const areaPath = `M ${pastPoints[0][0]},${PAD.top+chartH} ` +
+      pastPoints.map(p => `L ${p[0]},${p[1]}`).join(' ') +
+      ` L ${pastPoints[pastPoints.length-1][0]},${PAD.top+chartH} Z`;
+    svg += `<path d="${areaPath}" fill="#8b6914" opacity="0.1"/>`;
+  }
+
+  // Past line
+  const pastLine = pastAvgs.map((v,i) => v !== null ? `${xOf(i)},${yOf(v)}` : null).filter(Boolean);
+  if (pastLine.length > 1) {
+    svg += `<polyline points="${pastLine.join(' ')}" fill="none" stroke="#8b6914" stroke-width="2.5"/>`;
+  }
+
+  // Dots + labels for all points
+  allDates.forEach((ds, i) => {
+    const v = i < pastDates.length ? pastAvgs[i] : fcastAvgs[i - pastDates.length];
+    if (v === null) return;
+    const x = xOf(i), y = yOf(v);
+    const isFcast = i >= pastDates.length;
+    const color = isFcast ? '#e8b84b' : '#8b6914';
+    svg += `<circle cx="${x}" cy="${y}" r="3" fill="${color}" stroke="white" stroke-width="1"/>`;
+    // Label every other point to avoid clutter
+    if (i % 2 === 0) {
+      svg += `<text x="${x}" y="${y - 5}" text-anchor="middle" font-size="7" fill="${color}" font-family="DM Mono,monospace">${v.toFixed(1)}°</text>`;
+    }
+    // Date label at bottom
+    const dd = new Date(ds);
+    svg += `<text x="${x}" y="${PAD.top+chartH+10}" text-anchor="middle" font-size="6.5" fill="#9a8878" font-family="DM Mono,monospace">${dd.getDate()}/${dd.getMonth()+1}</text>`;
+  });
+
+  svg += `</svg>`;
+  document.getElementById('soil-svg').outerHTML = svg.replace('<svg', `<svg id="soil-svg" style="width:100%;height:100%"`);
+}
+
+function switchTab(id, e) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  e.target.classList.add('active');
+}
+
+load();
+</script>
+
+</body>
+</html>
