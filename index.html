@@ -1227,9 +1227,15 @@ function conseils(daily, cw) {
 async function fetchAndRender() {
   document.getElementById('loading').style.display = 'block';
   document.getElementById('content').style.display = 'none';
-  document.getElementById('loading').innerHTML = '<div class="spinner"></div>Chargement des données météo et du sol…';
+  document.getElementById('loading').innerHTML = '<div class="spinner"></div>Chargement des données météo…';
+
+  // Cache key based on location + date (cache 30 min)
+  const cacheKey = `meteo_cache_${LAT}_${LON}_${new Date().toISOString().slice(0,13)}`;
+  const cached = sessionStorage.getItem(cacheKey);
+
   try {
     const today = new Date();
+    const todayStr = today.toISOString().slice(0,10);
     const past7 = new Date(today); past7.setDate(today.getDate() - 7);
     const past7str = past7.toISOString().slice(0,10);
 
@@ -1240,25 +1246,114 @@ async function fetchAndRender() {
 
     const urlHistory = `https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}`
       + `&hourly=soil_temperature_6cm`
-      + `&start_date=${past7str}&end_date=${today.toISOString().slice(0,10)}`
+      + `&start_date=${past7str}&end_date=${todayStr}`
       + `&timezone=Europe%2FParis`;
 
-    const [forecastData, histData] = await Promise.all([
-      fetch(urlForecast).then(r => r.json()),
-      fetch(urlHistory).then(r => r.json()),
-    ]);
+    // --- ÉTAPE 1 : charger et afficher le forecast IMMÉDIATEMENT ---
+    let forecastData;
+    if (cached) {
+      forecastData = JSON.parse(cached);
+    } else {
+      forecastData = await fetch(urlForecast).then(r => r.json());
+      try { sessionStorage.setItem(cacheKey, JSON.stringify(forecastData)); } catch(e) {}
+    }
 
-    // Update location badge
     document.getElementById('location-badge-text').textContent = '📍 ' + LOCATION_NAME;
-    // Mobile badge inside banner
     const mob = document.getElementById('mobile-location');
     mob.textContent = '📍 ' + LOCATION_NAME;
     mob.style.display = window.innerWidth <= 640 ? 'block' : 'none';
-    render(forecastData, histData);
+
+    // Afficher le contenu principal avec un histData vide temporairement
+    const emptyHist = { hourly: { time: [], soil_temperature_6cm: [] } };
+    render(forecastData, emptyHist);
+
+    // --- ÉTAPE 2 : charger l'historique sol EN ARRIÈRE-PLAN ---
+    fetch(urlHistory).then(r => r.json()).then(histData => {
+      // Mettre à jour uniquement le graphique sol et le module DJC
+      updateSoilModules(forecastData, histData);
+    }).catch(() => {
+      // Silently fail — the rest of the dashboard is already visible
+    });
+
   } catch(e) {
     console.error(e);
     document.getElementById('loading').innerHTML = '<p style="color:var(--danger)">❌ Impossible de charger les données météo.<br><small>Vérifiez votre connexion internet.</small></p>';
   }
+}
+
+// Mise à jour différée des modules qui nécessitent l'historique
+function updateSoilModules(forecastData, histData) {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0,10);
+  const daily = forecastData.daily;
+  const hourly = forecastData.hourly;
+
+  // Recalcul soil temp avec vraies données historiques
+  const pastDates = [], pastAvgs = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    const ds = d.toISOString().slice(0,10);
+    pastDates.push(ds);
+    const avg = dailySoilAvg(histData.hourly.time, histData.hourly.soil_temperature_6cm, ds);
+    pastAvgs.push(avg !== null ? parseFloat(avg.toFixed(1)) : null);
+  }
+  const fcastDates = [], fcastAvgs = [];
+  for (let i = 0; i < 7; i++) {
+    const ds = daily.time[i];
+    const avg = dailySoilAvg(hourly.time, hourly.soil_temperature_6cm, ds);
+    fcastDates.push(ds);
+    fcastAvgs.push(avg !== null ? parseFloat(avg.toFixed(1)) : null);
+  }
+
+  renderSoilChart(pastDates, pastAvgs, fcastDates, fcastAvgs);
+
+  const recent5 = pastAvgs.slice(-5).filter(v => v !== null);
+  const avg5 = recent5.length ? recent5.reduce((a,b)=>a+b,0) / recent5.length : null;
+  const nowH = new Date().getHours();
+  const si = hourly.time.findIndex(t => t.startsWith(todayStr) && parseInt(t.slice(11,13)) >= nowH);
+  const currentSoilTemp = si >= 0 ? hourly.soil_temperature_6cm[si] : fcastAvgs[0];
+  document.getElementById('soil-graph-sub').textContent =
+    `Moy. 5j : ${avg5 !== null ? avg5.toFixed(1) : '--'}°C · Valeur actuelle : ${currentSoilTemp !== null ? currentSoilTemp.toFixed(1) : '--'}°C · Source : Open-Meteo ERA5-Land`;
+
+  // Mise à jour feu tricolore sol
+  const solOk = avg5 !== null && avg5 >= SEUIL_SOL;
+  const rain3j = daily.precipitation_sum.slice(0,3).reduce((a,b)=>a+b,0);
+  const gelRisk = daily.temperature_2m_min.slice(0,10).some(t => t <= 0);
+  const minGel = Math.min(...daily.temperature_2m_min.slice(0,10));
+  const portanceOk = rain3j < 20;
+
+  let feuColor, verdictTitle, verdictDetail;
+  if (gelRisk) {
+    feuColor='rouge'; verdictTitle='Ne pas semer — Gel prévu';
+    verdictDetail=`Gel attendu (Tmin ${minGel}°C) · Attendre la fin du risque gel`;
+  } else if (!solOk) {
+    feuColor='rouge'; verdictTitle='Sol trop froid — Attendre';
+    verdictDetail=`Moy. 5j sol : ${avg5!==null?avg5.toFixed(1):'?'}°C · Seuil 10°C non atteint`;
+  } else if (!portanceOk) {
+    feuColor='orange'; verdictTitle='Sol chaud mais terrain détrempé';
+    verdictDetail=`T° sol OK (${avg5.toFixed(1)}°C) · ${rain3j.toFixed(0)}mm/3j — attendre ressuyage`;
+  } else {
+    feuColor='vert'; verdictTitle='Conditions favorables — Vous pouvez semer';
+    verdictDetail=`T° sol ≥ 10°C · Portance correcte · Pas de gel prévu`;
+  }
+  document.getElementById('feu-rouge').classList.toggle('on', feuColor==='rouge');
+  document.getElementById('feu-orange').classList.toggle('on', feuColor==='orange');
+  document.getElementById('feu-vert').classList.toggle('on', feuColor==='vert');
+  const vt = document.getElementById('verdict-title');
+  vt.textContent = verdictTitle; vt.className = `verdict-title ${feuColor}`;
+  document.getElementById('verdict-detail').textContent = verdictDetail;
+
+  // Mise à jour critères
+  const criteres = [
+    { icon:'🌡', label:'T° sol 6cm maintenant', value: currentSoilTemp!==null?currentSoilTemp.toFixed(1)+'°C':'--', status: currentSoilTemp>=SEUIL_SOL?'✓ Seuil 10°C atteint':`+${(SEUIL_SOL-currentSoilTemp).toFixed(1)}°C manquants`, cls: currentSoilTemp>=SEUIL_SOL?'ok':'block' },
+    { icon:'📈', label:'Moy. 5 derniers jours', value: avg5!==null?avg5.toFixed(1)+'°C':'--', status: solOk?'✓ ≥ 10°C sur 5j':`Besoin +${avg5!==null?(SEUIL_SOL-avg5).toFixed(1):'?'}°C`, cls: solOk?'ok':'block' },
+    { icon:'❄️', label:'Risque gel 10 jours', value: gelRisk?`${minGel}°C`:'Aucun', status: gelRisk?'⚠ Gel prévu — attendre':'✓ Pas de gel prévu', cls: gelRisk?'block':'ok' },
+    { icon:'🚜', label:'Portance sol (pluie 3j)', value: rain3j.toFixed(0)+' mm', status: portanceOk?'✓ Sol ressuyé acceptable':'⚠ Sol détrempé — attendre', cls: portanceOk?'ok':'warn' },
+  ];
+  document.getElementById('semis-criteres').innerHTML = criteres.map(c=>`
+    <div class="critere-card ${c.cls}"><div class="critere-icon">${c.icon}</div><div class="critere-label">${c.label}</div><div class="critere-value">${c.value}</div><div class="critere-status">${c.status}</div></div>`).join('');
+
+  renderDJC(daily, histData);
 }
 
 // Geocoding via Open-Meteo geocoding API (free, no key)
