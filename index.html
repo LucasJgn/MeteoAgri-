@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -17,419 +16,584 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Lato', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
 
-header { background: var(–soil); color: var(–cream); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(–wheat); flex-wrap: wrap; gap: 10px; }
-header .logo { font-family: ‘Playfair Display’, serif; font-size: 1.4rem; font-weight: 700; }
-header .logo span { color: var(–wheat); }
-header .subtitle { font-family: ‘DM Mono’, monospace; font-size: 0.72rem; color: #bba080; margin-top: 2px; letter-spacing: 0.08em; text-transform: uppercase; }
-header .location-badge { font-family: ‘DM Mono’, monospace; font-size: 0.75rem; background: var(–wheat); color: var(–soil); padding: 6px 14px; border-radius: 2px; font-weight: 500; }
+  header { background: var(--soil); color: var(--cream); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--wheat); flex-wrap: wrap; gap: 12px; }
+  header .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; }
+  header .logo span { color: var(--wheat); }
+  header .subtitle { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: #bba080; margin-top: 2px; letter-spacing: 0.08em; text-transform: uppercase; }
+  header .location-badge { font-family: 'DM Mono', monospace; font-size: 0.75rem; background: var(--wheat); color: var(--soil); padding: 6px 14px; border-radius: 2px; font-weight: 500; }
 
-main { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
+  /* SEARCH BAR */
+  .search-wrap { position: relative; display: flex; align-items: center; gap: 8px; flex: 1; max-width: 420px; }
+  .search-inner { position: relative; flex: 1; }
+  #search-input {
+    width: 100%;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 3px;
+    color: var(--cream);
+    padding: 8px 36px 8px 12px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  #search-input::placeholder { color: #9a8060; }
+  #search-input:focus { border-color: var(--wheat); background: rgba(255,255,255,0.15); }
+  .search-icon {
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9rem;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  #btn-gps {
+    background: rgba(201,168,76,0.2);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 3px;
+    color: var(--wheat-light);
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  #btn-gps:hover { background: rgba(201,168,76,0.35); }
+  #btn-gps:disabled { opacity: 0.5; cursor: default; }
 
-#loading { text-align: center; padding: 80px 20px; color: var(–muted); font-family: ‘DM Mono’, monospace; font-size: 0.9rem; }
-.spinner { width: 40px; height: 40px; border: 3px solid #e0d5c5; border-top-color: var(–wheat); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-@keyframes spin { to { transform: rotate(360deg); } }
+  #search-results {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #2a1e12;
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 3px;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    max-height: 220px;
+    overflow-y: auto;
+  }
 
-/* CURRENT BANNER */
-#current-banner { background: linear-gradient(135deg, var(–soil) 0%, var(–soil-light) 100%); border-radius: 4px; padding: 24px 28px; display: flex; align-items: center; gap: 32px; margin-bottom: 24px; border-left: 6px solid var(–wheat); color: var(–cream); flex-wrap: wrap; }
-.current-temp { font-family: ‘Playfair Display’, serif; font-size: 4rem; font-weight: 700; color: var(–wheat-light); line-height: 1; }
-.current-temp sup { font-size: 1.5rem; vertical-align: super; }
-.current-desc { flex: 1; }
-.weather-label { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(–wheat-light); font-family: ‘Playfair Display’, serif; }
-.current-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 8px; }
-.current-meta .stat { font-family: ‘DM Mono’, monospace; font-size: 0.78rem; color: #c8b89a; }
-.current-meta .stat strong { color: var(–cream); font-size: 0.9rem; }
-.date-now { font-family: ‘DM Mono’, monospace; font-size: 0.7rem; color: #9a8060; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .search-result-item {
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--cream);
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.12s;
+  }
+  .search-result-item:last-child { border-bottom: none; }
+  .search-result-item:hover { background: rgba(201,168,76,0.15); }
 
-.alert-box { background: #fff3cd; border: 1px solid var(–wheat); border-left: 5px solid var(–sun); border-radius: 3px; padding: 10px 16px; margin-bottom: 12px; font-size: 0.85rem; font-weight: 600; color: #7a5500; }
-.alert-box.danger { background: #fde8e8; border-color: var(–danger); border-left-color: var(–danger); color: var(–danger); }
+  main { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
 
-.section-title { font-family: ‘Playfair Display’, serif; font-size: 1.1rem; font-weight: 600; color: var(–soil); border-bottom: 2px solid var(–wheat); padding-bottom: 6px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  #loading { text-align: center; padding: 80px 20px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.9rem; }
+  .spinner { width: 40px; height: 40px; border: 3px solid #e0d5c5; border-top-color: var(--wheat); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ============================================================
-MODULE SEMIS MAÏS
-============================================================ */
-#semis-module {
-background: white;
-border: 2px solid var(–maize);
-border-radius: 4px;
-margin-bottom: 28px;
-overflow: hidden;
-}
+  /* CURRENT BANNER */
+  #current-banner { background: linear-gradient(135deg, var(--soil) 0%, var(--soil-light) 100%); border-radius: 4px; padding: 24px 28px; display: flex; align-items: center; gap: 32px; margin-bottom: 24px; border-left: 6px solid var(--wheat); color: var(--cream); flex-wrap: wrap; }
+  .current-temp { font-family: 'Playfair Display', serif; font-size: 4rem; font-weight: 700; color: var(--wheat-light); line-height: 1; }
+  .current-temp sup { font-size: 1.5rem; vertical-align: super; }
+  .current-desc { flex: 1; }
+  .weather-label { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--wheat-light); font-family: 'Playfair Display', serif; }
+  .current-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 8px; }
+  .current-meta .stat { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: #c8b89a; }
+  .current-meta .stat strong { color: var(--cream); font-size: 0.9rem; }
+  .date-now { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: #9a8060; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
 
-.semis-header {
-background: linear-gradient(135deg, #3a2a08, #5c4010);
-padding: 16px 22px;
-display: flex;
-align-items: center;
-gap: 16px;
-flex-wrap: wrap;
-}
+  .alert-box { background: #fff3cd; border: 1px solid var(--wheat); border-left: 5px solid var(--sun); border-radius: 3px; padding: 10px 16px; margin-bottom: 12px; font-size: 0.85rem; font-weight: 600; color: #7a5500; }
+  .alert-box.danger { background: #fde8e8; border-color: var(--danger); border-left-color: var(--danger); color: var(--danger); }
 
-.semis-header-title {
-font-family: ‘Playfair Display’, serif;
-font-size: 1.15rem;
-font-weight: 700;
-color: var(–maize);
-flex: 1;
-}
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: var(--soil); border-bottom: 2px solid var(--wheat); padding-bottom: 6px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
-.semis-header-title small {
-display: block;
-font-family: ‘DM Mono’, monospace;
-font-size: 0.62rem;
-font-weight: 400;
-color: #c8a860;
-text-transform: uppercase;
-letter-spacing: 0.08em;
-margin-top: 2px;
-}
+  /* ============================================================
+     MODULE SEMIS MAÏS
+  ============================================================ */
+  #semis-module {
+    background: white;
+    border: 2px solid var(--maize);
+    border-radius: 4px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
 
-/* FEU TRICOLORE */
-.semis-feu {
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 4px;
-flex-shrink: 0;
-}
+  .semis-header {
+    background: linear-gradient(135deg, #3a2a08, #5c4010);
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
 
-.feu-light-wrap {
-background: #1a1208;
-border-radius: 20px;
-padding: 6px 8px;
-display: flex;
-flex-direction: column;
-gap: 5px;
-border: 2px solid #3a3020;
-}
+  .semis-header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--maize);
+    flex: 1;
+  }
 
-.feu-light {
-width: 22px; height: 22px;
-border-radius: 50%;
-opacity: 0.15;
-transition: opacity 0.4s, box-shadow 0.4s;
-}
+  .semis-header-title small {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 400;
+    color: #c8a860;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
 
-.feu-light.rouge  { background: #e74c3c; }
-.feu-light.orange { background: #f39c12; }
-.feu-light.vert   { background: #27ae60; }
+  /* FEU TRICOLORE */
+  .semis-feu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
 
-.feu-light.on.rouge  { opacity: 1; box-shadow: 0 0 10px #e74c3c88; }
-.feu-light.on.orange { opacity: 1; box-shadow: 0 0 10px #f39c1288; }
-.feu-light.on.vert   { opacity: 1; box-shadow: 0 0 10px #27ae6088; }
+  .feu-light-wrap {
+    background: #1a1208;
+    border-radius: 20px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border: 2px solid #3a3020;
+  }
 
-.feu-label {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.65rem;
-font-weight: 500;
-text-align: center;
-text-transform: uppercase;
-letter-spacing: 0.08em;
-}
+  .feu-light {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    opacity: 0.15;
+    transition: opacity 0.4s, box-shadow 0.4s;
+  }
 
-.feu-label.rouge  { color: #e74c3c; }
-.feu-label.orange { color: #f39c12; }
-.feu-label.vert   { color: #27ae60; }
+  .feu-light.rouge  { background: #e74c3c; }
+  .feu-light.orange { background: #f39c12; }
+  .feu-light.vert   { background: #27ae60; }
 
-.semis-verdict {
-flex: 1;
-padding: 4px 0;
-}
+  .feu-light.on.rouge  { opacity: 1; box-shadow: 0 0 10px #e74c3c88; }
+  .feu-light.on.orange { opacity: 1; box-shadow: 0 0 10px #f39c1288; }
+  .feu-light.on.vert   { opacity: 1; box-shadow: 0 0 10px #27ae6088; }
 
-.verdict-title {
-font-family: ‘Playfair Display’, serif;
-font-size: 1.3rem;
-font-weight: 700;
-margin-bottom: 4px;
-}
+  .feu-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
 
-.verdict-title.rouge  { color: #e74c3c; }
-.verdict-title.orange { color: #f5b642; }
-.verdict-title.vert   { color: var(–green-light); }
+  .feu-label.rouge  { color: #e74c3c; }
+  .feu-label.orange { color: #f39c12; }
+  .feu-label.vert   { color: #27ae60; }
 
-.verdict-detail {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.72rem;
-color: #c8a860;
-line-height: 1.5;
-}
+  .semis-verdict {
+    flex: 1;
+    padding: 4px 0;
+  }
 
-/* CRITÈRES */
-.semis-criteres {
-padding: 16px 22px;
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 12px;
-border-bottom: 1px solid #f0e8d0;
-}
+  .verdict-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
 
-.critere-card {
-border-radius: 3px;
-padding: 12px 14px;
-border: 1px solid #e8dfcf;
-position: relative;
-}
+  .verdict-title.rouge  { color: #e74c3c; }
+  .verdict-title.orange { color: #f5b642; }
+  .verdict-title.vert   { color: var(--green-light); }
 
-.critere-card.ok    { border-left: 4px solid var(–green); background: #f0faf2; }
-.critere-card.warn  { border-left: 4px solid var(–sun); background: #fffbf0; }
-.critere-card.block { border-left: 4px solid var(–danger); background: #fff5f5; }
-.critere-card.na    { border-left: 4px solid #ccc; background: #fafafa; }
+  .verdict-detail {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: #c8a860;
+    line-height: 1.5;
+  }
 
-.critere-icon { font-size: 1.4rem; margin-bottom: 4px; }
-.critere-label { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(–muted); margin-bottom: 4px; }
-.critere-value { font-family: ‘Playfair Display’, serif; font-size: 1.3rem; font-weight: 700; color: var(–soil); }
-.critere-status { font-family: ‘DM Mono’, monospace; font-size: 0.65rem; margin-top: 3px; }
-.critere-card.ok    .critere-status { color: var(–green); }
-.critere-card.warn  .critere-status { color: #c07800; }
-.critere-card.block .critere-status { color: var(–danger); }
-.critere-card.na    .critere-status { color: var(–muted); }
+  /* CRITÈRES */
+  .semis-criteres {
+    padding: 16px 22px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    border-bottom: 1px solid #f0e8d0;
+  }
 
-/* GRAPHIQUE TEMPÉRATURE SOL */
-.semis-graph-section {
-padding: 16px 22px 20px;
-}
+  .critere-card {
+    border-radius: 3px;
+    padding: 12px 14px;
+    border: 1px solid #e8dfcf;
+    position: relative;
+  }
 
-.semis-graph-title {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.7rem;
-text-transform: uppercase;
-letter-spacing: 0.1em;
-color: var(–muted);
-margin-bottom: 12px;
-display: flex;
-align-items: center;
-gap: 12px;
-}
+  .critere-card.ok    { border-left: 4px solid var(--green); background: #f0faf2; }
+  .critere-card.warn  { border-left: 4px solid var(--sun); background: #fffbf0; }
+  .critere-card.block { border-left: 4px solid var(--danger); background: #fff5f5; }
+  .critere-card.na    { border-left: 4px solid #ccc; background: #fafafa; }
 
-.graph-legend {
-display: flex;
-gap: 16px;
-margin-left: auto;
-flex-wrap: wrap;
-}
+  .critere-icon { font-size: 1.4rem; margin-bottom: 4px; }
+  .critere-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+  .critere-value { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--soil); }
+  .critere-status { font-family: 'DM Mono', monospace; font-size: 0.65rem; margin-top: 3px; }
+  .critere-card.ok    .critere-status { color: var(--green); }
+  .critere-card.warn  .critere-status { color: #c07800; }
+  .critere-card.block .critere-status { color: var(--danger); }
+  .critere-card.na    .critere-status { color: var(--muted); }
 
-.legend-item {
-display: flex;
-align-items: center;
-gap: 5px;
-font-size: 0.62rem;
-color: var(–muted);
-}
+  /* GRAPHIQUE TEMPÉRATURE SOL */
+  .semis-graph-section {
+    padding: 16px 22px 20px;
+  }
 
-.legend-dot {
-width: 10px; height: 3px; border-radius: 2px;
-}
+  .semis-graph-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 
-.soil-chart-wrap {
-position: relative;
-height: 140px;
-background: #fdfaf5;
-border: 1px solid #e8dfcf;
-border-radius: 3px;
-overflow: hidden;
-}
+  .graph-legend {
+    display: flex;
+    gap: 16px;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
 
-/* SVG chart drawn by JS */
-.soil-chart-wrap svg {
-width: 100%; height: 100%;
-}
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62rem;
+    color: var(--muted);
+  }
 
-/* Threshold line label */
-.threshold-label {
-position: absolute;
-right: 6px;
-font-family: ‘DM Mono’, monospace;
-font-size: 0.58rem;
-color: var(–danger);
-font-weight: 600;
-}
+  .legend-dot {
+    width: 10px; height: 3px; border-radius: 2px;
+  }
 
-.semis-graph-sub {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.62rem;
-color: var(–muted);
-margin-top: 6px;
-text-align: center;
-font-style: italic;
-}
+  .soil-chart-wrap {
+    position: relative;
+    height: 140px;
+    background: #fdfaf5;
+    border: 1px solid #e8dfcf;
+    border-radius: 3px;
+    overflow: hidden;
+  }
 
-/* CONSEILS SEMIS */
-.semis-conseils {
-padding: 0 22px 16px;
-}
-.semis-conseil-item {
-font-size: 0.82rem;
-color: var(–text);
-padding: 5px 0;
-border-bottom: 1px solid #ede8e0;
-display: flex;
-gap: 8px;
-align-items: flex-start;
-}
-.semis-conseil-item:last-child { border-bottom: none; }
-.semis-conseil-item::before { content: ‘▸’; color: var(–maize); flex-shrink: 0; margin-top: 1px; }
+  /* SVG chart drawn by JS */
+  .soil-chart-wrap svg {
+    width: 100%; height: 100%;
+  }
 
-/* DATE CIBLE */
-.semis-target {
-margin: 0 22px 16px;
-background: linear-gradient(135deg, #fef9ef, #fdf0d0);
-border: 1px solid var(–maize);
-border-radius: 3px;
-padding: 12px 16px;
-display: flex;
-align-items: center;
-gap: 14px;
-}
+  /* Threshold line label */
+  .threshold-label {
+    position: absolute;
+    right: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--danger);
+    font-weight: 600;
+  }
 
-.target-icon { font-size: 2rem; flex-shrink: 0; }
+  .semis-graph-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    margin-top: 6px;
+    text-align: center;
+    font-style: italic;
+  }
 
-.target-text .target-label {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.62rem;
-text-transform: uppercase;
-letter-spacing: 0.1em;
-color: var(–muted);
-}
+  /* CONSEILS SEMIS */
+  .semis-conseils {
+    padding: 0 22px 16px;
+  }
+  .semis-conseil-item {
+    font-size: 0.82rem;
+    color: var(--text);
+    padding: 5px 0;
+    border-bottom: 1px solid #ede8e0;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .semis-conseil-item:last-child { border-bottom: none; }
+  .semis-conseil-item::before { content: '▸'; color: var(--maize); flex-shrink: 0; margin-top: 1px; }
 
-.target-text .target-date {
-font-family: ‘Playfair Display’, serif;
-font-size: 1.2rem;
-font-weight: 700;
-color: var(–maize-dark);
-margin-top: 2px;
-}
+  /* DATE CIBLE */
+  .semis-target {
+    margin: 0 22px 16px;
+    background: linear-gradient(135deg, #fef9ef, #fdf0d0);
+    border: 1px solid var(--maize);
+    border-radius: 3px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
 
-.target-text .target-range {
-font-family: ‘DM Mono’, monospace;
-font-size: 0.68rem;
-color: var(–muted);
-margin-top: 2px;
-}
+  .target-icon { font-size: 2rem; flex-shrink: 0; }
 
-/* 7-DAY FORECAST */
-#forecast-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 6px; }
-.day-card { background: white; border-radius: 3px; padding: 14px 10px; text-align: center; border: 1px solid #e8dfcf; border-top: 3px solid transparent; transition: transform 0.15s, box-shadow 0.15s; }
-.day-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(61,43,31,0.1); }
-.day-card.today { border-top-color: var(–wheat); background: #fef9ef; }
-.day-card.rain-risk { border-top-color: var(–rain); }
-.day-card.good-day { border-top-color: var(–green); }
-.day-name { font-family: ‘DM Mono’, monospace; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(–muted); margin-bottom: 8px; }
-.day-card.today .day-name { color: var(–soil); font-weight: 700; }
-.day-icon { font-size: 1.8rem; margin: 6px 0; }
-.day-temps { display: flex; justify-content: center; gap: 6px; margin: 6px 0; }
-.temp-max { font-family: ‘Playfair Display’, serif; font-weight: 700; font-size: 1.1rem; color: var(–text); }
-.temp-min { font-size: 0.9rem; color: var(–muted); align-self: flex-end; }
-.day-rain { font-family: ‘DM Mono’, monospace; font-size: 0.7rem; color: var(–rain); margin-top: 4px; }
-.day-rain.no-rain { color: var(–green); }
-.day-etp { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; color: var(–muted); margin-top: 4px; }
-.day-wind { font-family: ‘DM Mono’, monospace; font-size: 0.65rem; color: #9a8060; margin-top: 3px; }
+  .target-text .target-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
 
-/* CONFIDENCE RULER */
-.conf-label-row { display: flex; font-family: ‘DM Mono’, monospace; font-size: 0.6rem; color: var(–muted); margin-bottom: 3px; margin-top: 10px; }
-.conf-label-row span { flex: 1; }
-.conf-label-row span:last-child { text-align: right; }
-.conf-label-row span:nth-child(2) { text-align: center; }
-.confidence-ruler { display: flex; height: 5px; border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
-.conf-seg.high   { background: var(–green); flex: 7; }
-.conf-seg.medium { background: var(–wheat); flex: 3; }
-.conf-seg.low    { background: #c8a070; flex: 3; }
-.conf-seg.vlow   { background: #ddc090; flex: 3; opacity: 0.55; }
+  .target-text .target-date {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--maize-dark);
+    margin-top: 2px;
+  }
 
-/* TENDANCES */
-.tendances-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 9px 14px; background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(154,144,128,0.05) 6px, rgba(154,144,128,0.05) 12px); border: 1px dashed #c8b89a; border-radius: 3px; flex-wrap: wrap; }
-.tendances-badge { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; background: var(–fog); color: white; padding: 3px 8px; border-radius: 2px; flex-shrink: 0; }
-.tendances-disclaimer { font-family: ‘DM Mono’, monospace; font-size: 0.67rem; color: var(–muted); font-style: italic; flex: 1; }
-.fiab-wrap { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
-.fiab-dot { width: 8px; height: 8px; border-radius: 50%; }
-.fiab-dot.on { background: var(–wheat); }
-.fiab-dot.off { background: #ddd; }
-.fiab-label { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; color: var(–muted); }
+  .target-text .target-range {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
 
-#tendances-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 7px; margin-bottom: 28px; }
-.tend-card { background: white; border-radius: 3px; padding: 11px 7px; text-align: center; border: 1px dashed #d5cdbf; border-top: 3px solid #cdc5b5; position: relative; overflow: hidden; transition: opacity 0.15s; }
-.tend-card:hover { opacity: 1 !important; }
-.tend-card.tend-rain { border-top-color: #8aadc8; }
-.tend-card.tend-dry  { border-top-color: #96b878; }
-#tendances-grid .tend-card:nth-child(1) { opacity: 0.82; }
-#tendances-grid .tend-card:nth-child(2) { opacity: 0.76; }
-#tendances-grid .tend-card:nth-child(3) { opacity: 0.70; }
-#tendances-grid .tend-card:nth-child(4) { opacity: 0.64; }
-#tendances-grid .tend-card:nth-child(5) { opacity: 0.58; }
-#tendances-grid .tend-card:nth-child(6) { opacity: 0.51; }
-#tendances-grid .tend-card:nth-child(7) { opacity: 0.44; }
-#tendances-grid .tend-card:nth-child(8) { opacity: 0.38; }
-#tendances-grid .tend-card:nth-child(9) { opacity: 0.32; }
-.tend-uncertainty { position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(180,168,150,0.07) 5px, rgba(180,168,150,0.07) 10px); pointer-events: none; }
-.tend-name { font-family: ‘DM Mono’, monospace; font-size: 0.63rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: #9a8878; margin-bottom: 5px; }
-.tend-icon { font-size: 1.45rem; margin: 3px 0; filter: grayscale(25%); }
-.tend-temps { display: flex; justify-content: center; gap: 4px; margin: 4px 0; }
-.tend-tmax { font-family: ‘Playfair Display’, serif; font-weight: 700; font-size: 0.98rem; color: #5a4a3a; }
-.tend-tmin { font-size: 0.8rem; color: #9a8878; align-self: flex-end; }
-.tend-rain-val { font-family: ‘DM Mono’, monospace; font-size: 0.62rem; color: #7090b0; margin-top: 2px; }
-.tend-rain-val.dry { color: #7aaa60; }
+  /* 7-DAY FORECAST */
+  #forecast-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 6px; }
+  .day-card { background: white; border-radius: 3px; padding: 14px 10px; text-align: center; border: 1px solid #e8dfcf; border-top: 3px solid transparent; transition: transform 0.15s, box-shadow 0.15s; }
+  .day-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(61,43,31,0.1); }
+  .day-card.today { border-top-color: var(--wheat); background: #fef9ef; }
+  .day-card.rain-risk { border-top-color: var(--rain); }
+  .day-card.good-day { border-top-color: var(--green); }
+  .day-name { font-family: 'DM Mono', monospace; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  .day-card.today .day-name { color: var(--soil); font-weight: 700; }
+  .day-icon { font-size: 1.8rem; margin: 6px 0; }
+  .day-temps { display: flex; justify-content: center; gap: 6px; margin: 6px 0; }
+  .temp-max { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.1rem; color: var(--text); }
+  .temp-min { font-size: 0.9rem; color: var(--muted); align-self: flex-end; }
+  .day-rain { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--rain); margin-top: 4px; }
+  .day-rain.no-rain { color: var(--green); }
+  .day-etp { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); margin-top: 4px; }
+  .day-wind { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: #9a8060; margin-top: 3px; }
 
-/* CONSEIL */
-#conseil-box { background: linear-gradient(135deg, #f0ede6, white); border: 1px solid #ddd4c0; border-left: 5px solid var(–green); border-radius: 3px; padding: 16px 20px; margin-bottom: 24px; }
-.conseil-title { font-family: ‘Playfair Display’, serif; font-size: 1rem; font-weight: 600; color: var(–green); margin-bottom: 10px; }
-.conseil-list { list-style: none; }
-.conseil-list li { font-size: 0.85rem; color: var(–text); padding: 5px 0; border-bottom: 1px solid #ede8e0; display: flex; gap: 8px; }
-.conseil-list li:last-child { border-bottom: none; }
-.conseil-list li::before { content: ‘▸’; color: var(–wheat); flex-shrink: 0; margin-top: 1px; }
+  /* CONFIDENCE RULER */
+  .conf-label-row { display: flex; font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-bottom: 3px; margin-top: 10px; }
+  .conf-label-row span { flex: 1; }
+  .conf-label-row span:last-child { text-align: right; }
+  .conf-label-row span:nth-child(2) { text-align: center; }
+  .confidence-ruler { display: flex; height: 5px; border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
+  .conf-seg.high   { background: var(--green); flex: 7; }
+  .conf-seg.medium { background: var(--wheat); flex: 3; }
+  .conf-seg.low    { background: #c8a070; flex: 3; }
+  .conf-seg.vlow   { background: #ddc090; flex: 3; opacity: 0.55; }
 
-/* AGRO */
-#agro-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
-.agro-card { background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 16px 18px; }
-.agro-label { font-family: ‘DM Mono’, monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(–muted); margin-bottom: 6px; }
-.agro-value { font-family: ‘Playfair Display’, serif; font-size: 1.8rem; font-weight: 700; color: var(–soil); line-height: 1; }
-.agro-unit { font-family: ‘DM Mono’, monospace; font-size: 0.7rem; color: var(–muted); margin-top: 4px; }
-.agro-bar { height: 4px; background: #e8dfcf; border-radius: 2px; margin-top: 10px; overflow: hidden; }
-.agro-bar-fill { height: 100%; border-radius: 2px; background: var(–wheat); }
-.agro-bar-fill.green { background: var(–green); }
-.agro-bar-fill.rain { background: var(–rain); }
-.agro-bar-fill.danger { background: var(–danger); }
-.agro-interpretation { font-size: 0.72rem; color: var(–muted); margin-top: 6px; }
+  /* TENDANCES */
+  .tendances-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 9px 14px; background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(154,144,128,0.05) 6px, rgba(154,144,128,0.05) 12px); border: 1px dashed #c8b89a; border-radius: 3px; flex-wrap: wrap; }
+  .tendances-badge { font-family: 'DM Mono', monospace; font-size: 0.62rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; background: var(--fog); color: white; padding: 3px 8px; border-radius: 2px; flex-shrink: 0; }
+  .tendances-disclaimer { font-family: 'DM Mono', monospace; font-size: 0.67rem; color: var(--muted); font-style: italic; flex: 1; }
+  .fiab-wrap { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+  .fiab-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .fiab-dot.on { background: var(--wheat); }
+  .fiab-dot.off { background: #ddd; }
+  .fiab-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); }
 
-/* TABS */
-.tabs { display: flex; margin-bottom: 16px; border-bottom: 2px solid #e8dfcf; }
-.tab-btn { font-family: ‘DM Mono’, monospace; font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 18px; background: none; border: none; cursor: pointer; color: var(–muted); border-bottom: 3px solid transparent; margin-bottom: -2px; }
-.tab-btn.active { color: var(–soil); border-bottom-color: var(–wheat); }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
+  #tendances-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 7px; margin-bottom: 28px; }
+  .tend-card { background: white; border-radius: 3px; padding: 11px 7px; text-align: center; border: 1px dashed #d5cdbf; border-top: 3px solid #cdc5b5; position: relative; overflow: hidden; transition: opacity 0.15s; }
+  .tend-card:hover { opacity: 1 !important; }
+  .tend-card.tend-rain { border-top-color: #8aadc8; }
+  .tend-card.tend-dry  { border-top-color: #96b878; }
+  #tendances-grid .tend-card:nth-child(1) { opacity: 0.82; }
+  #tendances-grid .tend-card:nth-child(2) { opacity: 0.76; }
+  #tendances-grid .tend-card:nth-child(3) { opacity: 0.70; }
+  #tendances-grid .tend-card:nth-child(4) { opacity: 0.64; }
+  #tendances-grid .tend-card:nth-child(5) { opacity: 0.58; }
+  #tendances-grid .tend-card:nth-child(6) { opacity: 0.51; }
+  #tendances-grid .tend-card:nth-child(7) { opacity: 0.44; }
+  #tendances-grid .tend-card:nth-child(8) { opacity: 0.38; }
+  #tendances-grid .tend-card:nth-child(9) { opacity: 0.32; }
+  .tend-uncertainty { position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(180,168,150,0.07) 5px, rgba(180,168,150,0.07) 10px); pointer-events: none; }
+  .tend-name { font-family: 'DM Mono', monospace; font-size: 0.63rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: #9a8878; margin-bottom: 5px; }
+  .tend-icon { font-size: 1.45rem; margin: 3px 0; filter: grayscale(25%); }
+  .tend-temps { display: flex; justify-content: center; gap: 4px; margin: 4px 0; }
+  .tend-tmax { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 0.98rem; color: #5a4a3a; }
+  .tend-tmin { font-size: 0.8rem; color: #9a8878; align-self: flex-end; }
+  .tend-rain-val { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: #7090b0; margin-top: 2px; }
+  .tend-rain-val.dry { color: #7aaa60; }
 
-/* HOURLY */
-.hourly-scroll { overflow-x: auto; padding-bottom: 8px; }
-.hourly-chart { display: flex; min-width: 800px; align-items: flex-end; height: 120px; background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 12px 8px 8px; }
-.hourly-col { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
-.hourly-bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; justify-content: center; }
-.hourly-bar { width: 70%; border-radius: 2px 2px 0 0; background: var(–sky-deep); opacity: 0.7; min-height: 2px; }
-.hourly-time { font-family: ‘DM Mono’, monospace; font-size: 0.55rem; color: var(–muted); margin-top: 4px; }
-.hourly-temp { font-family: ‘DM Mono’, monospace; font-size: 0.6rem; font-weight: 500; color: var(–soil); position: absolute; top: -16px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+  /* CONSEIL */
+  #conseil-box { background: linear-gradient(135deg, #f0ede6, white); border: 1px solid #ddd4c0; border-left: 5px solid var(--green); border-radius: 3px; padding: 16px 20px; margin-bottom: 24px; }
+  .conseil-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--green); margin-bottom: 10px; }
+  .conseil-list { list-style: none; }
+  .conseil-list li { font-size: 0.85rem; color: var(--text); padding: 5px 0; border-bottom: 1px solid #ede8e0; display: flex; gap: 8px; }
+  .conseil-list li:last-child { border-bottom: none; }
+  .conseil-list li::before { content: '▸'; color: var(--wheat); flex-shrink: 0; margin-top: 1px; }
 
-/* RAIN */
-.rain-bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 10px 12px 8px; }
-.rain-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-.rain-bar-val { font-family: ‘DM Mono’, monospace; font-size: 0.6rem; color: var(–rain); }
-.rain-bar-fill { width: 100%; background: var(–rain); border-radius: 2px 2px 0 0; opacity: 0.75; min-height: 2px; }
-.rain-bar-day { font-family: ‘DM Mono’, monospace; font-size: 0.6rem; color: var(–muted); }
+  /* AGRO */
+  #agro-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .agro-card { background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 16px 18px; }
+  .agro-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; }
+  .agro-value { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; color: var(--soil); line-height: 1; }
+  .agro-unit { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+  .agro-bar { height: 4px; background: #e8dfcf; border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .agro-bar-fill { height: 100%; border-radius: 2px; background: var(--wheat); }
+  .agro-bar-fill.green { background: var(--green); }
+  .agro-bar-fill.rain { background: var(--rain); }
+  .agro-bar-fill.danger { background: var(--danger); }
+  .agro-interpretation { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
 
-footer { text-align: center; font-family: ‘DM Mono’, monospace; font-size: 0.65rem; color: #bbb; padding: 20px; border-top: 1px solid #e8dfcf; margin-top: 12px; }
+  /* TABS */
+  .tabs { display: flex; margin-bottom: 16px; border-bottom: 2px solid #e8dfcf; }
+  .tab-btn { font-family: 'DM Mono', monospace; font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 18px; background: none; border: none; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .tab-btn.active { color: var(--soil); border-bottom-color: var(--wheat); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
-@media (max-width: 960px) { #forecast-grid { grid-template-columns: repeat(4, 1fr); } #tendances-grid { grid-template-columns: repeat(5, 1fr); } #agro-grid { grid-template-columns: repeat(2, 1fr); } .semis-criteres { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 580px) { #forecast-grid { grid-template-columns: repeat(3, 1fr); } #tendances-grid { grid-template-columns: repeat(3, 1fr); } .semis-criteres { grid-template-columns: 1fr 1fr; } }
+  /* HOURLY */
+  .hourly-scroll { overflow-x: auto; padding-bottom: 8px; }
+  .hourly-chart { display: flex; min-width: 800px; align-items: flex-end; height: 120px; background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 12px 8px 8px; }
+  .hourly-col { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+  .hourly-bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; justify-content: center; }
+  .hourly-bar { width: 70%; border-radius: 2px 2px 0 0; background: var(--sky-deep); opacity: 0.7; min-height: 2px; }
+  .hourly-time { font-family: 'DM Mono', monospace; font-size: 0.55rem; color: var(--muted); margin-top: 4px; }
+  .hourly-temp { font-family: 'DM Mono', monospace; font-size: 0.6rem; font-weight: 500; color: var(--soil); position: absolute; top: -16px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
 
-.fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
-@keyframes fadeIn { to { opacity: 1; } }
+  /* RAIN */
+  .rain-bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 10px 12px 8px; }
+  .rain-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .rain-bar-val { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--rain); }
+  .rain-bar-fill { width: 100%; background: var(--rain); border-radius: 2px 2px 0 0; opacity: 0.75; min-height: 2px; }
+  .rain-bar-day { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); }
+
+  footer { text-align: center; font-family: 'DM Mono', monospace; font-size: 0.65rem; color: #bbb; padding: 20px; border-top: 1px solid #e8dfcf; margin-top: 12px; }
+
+  /* ── TABLET ── */
+  @media (max-width: 960px) {
+    #forecast-grid       { grid-template-columns: repeat(4, 1fr); }
+    #tendances-grid      { grid-template-columns: repeat(5, 1fr); }
+    #agro-grid           { grid-template-columns: repeat(2, 1fr); }
+    .semis-criteres      { grid-template-columns: repeat(2, 1fr); }
+    .search-wrap         { max-width: 300px; }
+  }
+
+  /* ── MOBILE (iPhone SE → 14 Pro Max) ── */
+  @media (max-width: 640px) {
+    /* Header */
+    header               { padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 10px; }
+    header > div:first-child { display: flex; align-items: center; justify-content: space-between; }
+    header .logo         { font-size: 1.1rem; }
+    header .subtitle     { display: none; }
+    .location-badge      { display: none; } /* remplacé par le badge dans le banner */
+    .search-wrap         { max-width: 100%; }
+    #search-input        { font-size: 1rem; padding: 10px 36px 10px 12px; } /* touch-friendly */
+    #btn-gps             { padding: 10px 14px; font-size: 1.1rem; }
+
+    /* Main padding */
+    main                 { padding: 14px 12px; }
+
+    /* Current banner */
+    #current-banner      { padding: 16px 16px; gap: 16px; }
+    .current-temp        { font-size: 3rem; }
+    .current-meta        { gap: 12px; }
+    .current-meta .stat  { font-size: 0.72rem; }
+
+    /* Conseil */
+    #conseil-box         { padding: 12px 14px; }
+    .conseil-list li     { font-size: 0.82rem; }
+
+    /* Semis module */
+    .semis-header        { padding: 12px 14px; flex-wrap: wrap; gap: 10px; }
+    .semis-header-title  { font-size: 1rem; width: 100%; }
+    .semis-header-title small { font-size: 0.6rem; }
+    .semis-feu           { flex-direction: row; align-items: center; gap: 10px; }
+    .feu-light-wrap      { flex-direction: row; padding: 5px 8px; gap: 8px; border-radius: 20px; }
+    .feu-light           { width: 18px; height: 18px; }
+    .semis-verdict       { flex: 1; }
+    .verdict-title       { font-size: 1rem; }
+    .verdict-detail      { font-size: 0.68rem; }
+    .semis-criteres      { grid-template-columns: 1fr 1fr; padding: 12px 14px; gap: 8px; }
+    .critere-card        { padding: 10px 10px; }
+    .critere-icon        { font-size: 1.1rem; }
+    .critere-value       { font-size: 1.1rem; }
+    .semis-target        { margin: 0 14px 12px; padding: 10px 12px; }
+    .target-icon         { font-size: 1.5rem; }
+    .target-text .target-date { font-size: 1rem; }
+    .semis-graph-section { padding: 12px 14px 14px; }
+    .semis-graph-title   { font-size: 0.65rem; flex-direction: column; align-items: flex-start; gap: 6px; }
+    .graph-legend        { margin-left: 0; gap: 10px; }
+    .soil-chart-wrap     { height: 110px; }
+    .semis-conseils      { padding: 0 14px 12px; }
+    .semis-conseil-item  { font-size: 0.78rem; }
+
+    /* Forecast grid — 4 jours visibles, scroll horizontal pour les autres */
+    #forecast-grid       { grid-template-columns: repeat(4, minmax(72px, 1fr)); overflow-x: auto; padding-bottom: 4px; }
+    .day-card            { padding: 10px 6px; }
+    .day-icon            { font-size: 1.4rem; }
+    .temp-max            { font-size: 0.95rem; }
+    .day-etp             { display: none; } /* masqué sur mobile pour alléger */
+
+    /* Tendances — 3 colonnes sur mobile */
+    #tendances-grid      { grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    .tend-card           { padding: 8px 5px; }
+    .tend-icon           { font-size: 1.1rem; }
+    .tend-tmax           { font-size: 0.85rem; }
+    .tendances-header    { padding: 8px 10px; }
+    .tendances-disclaimer { font-size: 0.62rem; }
+
+    /* Agro indicators — 2 colonnes */
+    #agro-grid           { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .agro-value          { font-size: 1.5rem; }
+
+    /* Tabs */
+    .tab-btn             { padding: 10px 12px; font-size: 0.68rem; }
+
+    /* Section titles */
+    .section-title       { font-size: 0.95rem; }
+
+    /* Confidence ruler labels */
+    .conf-label-row      { font-size: 0.55rem; }
+  }
+
+  /* ── VERY SMALL (iPhone SE 1st gen, 320px) ── */
+  @media (max-width: 360px) {
+    #forecast-grid       { grid-template-columns: repeat(3, minmax(68px, 1fr)); }
+    .semis-criteres      { grid-template-columns: 1fr 1fr; }
+    #tendances-grid      { grid-template-columns: repeat(3, 1fr); }
+    #agro-grid           { grid-template-columns: 1fr 1fr; }
+    .tab-btn             { padding: 9px 8px; font-size: 0.62rem; letter-spacing: 0; }
+  }
+
+  .fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
+  @keyframes fadeIn { to { opacity: 1; } }
 </style>
-
 </head>
 <body>
 
 <header>
   <div>
-    <div class="logo">🌾 Météo <span>La Roulandière</span></div>
-    <div class="subtitle">Tableau de bord météo agriculteur</div>
+    <div class="logo">🌾 Météo <span>Agriculteur</span></div>
+    <div class="subtitle">Tableau de bord météo parcelle</div>
   </div>
-  <div class="location-badge">📍 Courgains — Sarthe (72)</div>
+  <div class="search-wrap">
+    <div class="search-inner">
+      <input type="text" id="search-input" placeholder="Commune, code postal…" autocomplete="off" spellcheck="false">
+      <span class="search-icon">🔍</span>
+      <div id="search-results"></div>
+    </div>
+    <button id="btn-gps" onclick="useGPS()" title="Utiliser ma position GPS">📡</button>
+  </div>
+  <div class="location-badge" id="location-badge-text">📍 Courgains — Sarthe</div>
 </header>
 
 <main>
@@ -437,107 +601,106 @@ footer { text-align: center; font-family: ‘DM Mono’, monospace; font-size: 0
 
   <div id="content" style="display:none">
 
-```
-<div id="alerts-container"></div>
+    <div id="alerts-container"></div>
 
-<!-- CURRENT -->
-<div id="current-banner" class="fade-in">
-  <div class="current-temp" id="cur-temp">--<sup>°</sup></div>
-  <div class="current-desc">
-    <div class="date-now" id="cur-date"></div>
-    <div class="weather-label" id="cur-label">--</div>
-    <div class="current-meta" id="cur-meta"></div>
-  </div>
-</div>
-
-<!-- CONSEILS DU JOUR -->
-<div id="conseil-box">
-  <div class="conseil-title">🌱 Conseils parcelle du jour</div>
-  <ul class="conseil-list" id="conseil-list"></ul>
-</div>
-
-<!-- ==============================
-     MODULE FENÊTRE SEMIS MAÏS
-=============================== -->
-<div id="semis-module">
-  <div class="semis-header">
-    <div class="semis-header-title">
-      🌽 Fenêtre Semis Maïs
-      <small>Analyse en temps réel — seuil 10°C à 10 cm · 5 jours consécutifs</small>
-    </div>
-    <!-- Feu tricolore -->
-    <div class="semis-feu">
-      <div class="feu-light-wrap">
-        <div class="feu-light rouge" id="feu-rouge"></div>
-        <div class="feu-light orange" id="feu-orange"></div>
-        <div class="feu-light vert" id="feu-vert"></div>
+    <!-- CURRENT -->
+    <div id="current-banner" class="fade-in">
+      <div class="current-temp" id="cur-temp">--<sup>°</sup></div>
+      <div class="current-desc">
+        <div class="date-now" id="cur-date"></div>
+        <div class="weather-label" id="cur-label">--</div>
+        <div id="mobile-location" style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#e8c96a;margin-bottom:4px;display:none"></div>
+        <div class="current-meta" id="cur-meta"></div>
       </div>
     </div>
-    <div class="semis-verdict">
-      <div class="verdict-title" id="verdict-title">Analyse…</div>
-      <div class="verdict-detail" id="verdict-detail"></div>
+
+    <!-- CONSEILS DU JOUR -->
+    <div id="conseil-box">
+      <div class="conseil-title">🌱 Conseils parcelle du jour</div>
+      <ul class="conseil-list" id="conseil-list"></ul>
     </div>
-  </div>
 
-  <!-- CRITÈRES -->
-  <div class="semis-criteres" id="semis-criteres"></div>
+    <!-- ==============================
+         MODULE FENÊTRE SEMIS MAÏS
+    =============================== -->
+    <div id="semis-module">
+      <div class="semis-header">
+        <div class="semis-header-title">
+          🌽 Fenêtre Semis Maïs
+          <small>Analyse en temps réel — seuil 10°C à 10 cm · 5 jours consécutifs</small>
+        </div>
+        <!-- Feu tricolore -->
+        <div class="semis-feu">
+          <div class="feu-light-wrap">
+            <div class="feu-light rouge" id="feu-rouge"></div>
+            <div class="feu-light orange" id="feu-orange"></div>
+            <div class="feu-light vert" id="feu-vert"></div>
+          </div>
+        </div>
+        <div class="semis-verdict">
+          <div class="verdict-title" id="verdict-title">Analyse…</div>
+          <div class="verdict-detail" id="verdict-detail"></div>
+        </div>
+      </div>
 
-  <!-- DATE CIBLE -->
-  <div class="semis-target" id="semis-target"></div>
+      <!-- CRITÈRES -->
+      <div class="semis-criteres" id="semis-criteres"></div>
 
-  <!-- GRAPHIQUE SOL -->
-  <div class="semis-graph-section">
-    <div class="semis-graph-title">
-      Température du sol à 6 cm — passé (7j) + prévision (7j)
-      <div class="graph-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#8b6914"></div>T° sol 6cm</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#e8b84b;opacity:0.6"></div>T° sol 6cm (prévision)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#e74c3c;border-top: 2px dashed #e74c3c;height:0"></div>Seuil 10°C</div>
+      <!-- DATE CIBLE -->
+      <div class="semis-target" id="semis-target"></div>
+
+      <!-- GRAPHIQUE SOL -->
+      <div class="semis-graph-section">
+        <div class="semis-graph-title">
+          Température du sol à 6 cm — passé (7j) + prévision (7j)
+          <div class="graph-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#8b6914"></div>T° sol 6cm</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#e8b84b;opacity:0.6"></div>T° sol 6cm (prévision)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#e74c3c;border-top: 2px dashed #e74c3c;height:0"></div>Seuil 10°C</div>
+          </div>
+        </div>
+        <div class="soil-chart-wrap" id="soil-chart-wrap">
+          <svg id="soil-svg" viewBox="0 0 800 140" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="semis-graph-sub" id="soil-graph-sub"></div>
+      </div>
+
+      <!-- CONSEILS SEMIS -->
+      <div class="semis-conseils" id="semis-conseils-list"></div>
+    </div>
+
+    <!-- PREVISIONS 7 JOURS -->
+    <div class="section-title">📅 Prévisions fiables — 7 jours</div>
+    <div id="forecast-grid"></div>
+
+    <!-- CONFIDENCE RULER -->
+    <div class="conf-label-row">
+      <span>← Fiable (J+1)</span><span>J+7 / J+8</span><span>Tendances (J+16) →</span>
+    </div>
+    <div class="confidence-ruler">
+      <div class="conf-seg high"></div><div class="conf-seg medium"></div><div class="conf-seg low"></div><div class="conf-seg vlow"></div>
+    </div>
+
+    <!-- TENDANCES -->
+    <div class="tendances-header">
+      <span class="tendances-badge">⚠ Tendances J+8 → J+16</span>
+      <span class="tendances-disclaimer">Ordre de grandeur uniquement — tendance sèche/humide et fourchette de températures.</span>
+      <div class="fiab-wrap">
+        <div class="fiab-dot on"></div><div class="fiab-dot on"></div><div class="fiab-dot off"></div><div class="fiab-dot off"></div><div class="fiab-dot off"></div>
+        <span class="fiab-label">Fiabilité 2/5</span>
       </div>
     </div>
-    <div class="soil-chart-wrap" id="soil-chart-wrap">
-      <svg id="soil-svg" viewBox="0 0 800 140" preserveAspectRatio="none"></svg>
+    <div id="tendances-grid"></div>
+
+    <!-- ONGLETS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('agro',event)">Indicateurs agro</button>
+      <button class="tab-btn" onclick="switchTab('hourly',event)">Heure par heure</button>
+      <button class="tab-btn" onclick="switchTab('rain',event)">Cumuls pluie</button>
     </div>
-    <div class="semis-graph-sub" id="soil-graph-sub"></div>
-  </div>
-
-  <!-- CONSEILS SEMIS -->
-  <div class="semis-conseils" id="semis-conseils-list"></div>
-</div>
-
-<!-- PREVISIONS 7 JOURS -->
-<div class="section-title">📅 Prévisions fiables — 7 jours</div>
-<div id="forecast-grid"></div>
-
-<!-- CONFIDENCE RULER -->
-<div class="conf-label-row">
-  <span>← Fiable (J+1)</span><span>J+7 / J+8</span><span>Tendances (J+16) →</span>
-</div>
-<div class="confidence-ruler">
-  <div class="conf-seg high"></div><div class="conf-seg medium"></div><div class="conf-seg low"></div><div class="conf-seg vlow"></div>
-</div>
-
-<!-- TENDANCES -->
-<div class="tendances-header">
-  <span class="tendances-badge">⚠ Tendances J+8 → J+16</span>
-  <span class="tendances-disclaimer">Ordre de grandeur uniquement — tendance sèche/humide et fourchette de températures.</span>
-  <div class="fiab-wrap">
-    <div class="fiab-dot on"></div><div class="fiab-dot on"></div><div class="fiab-dot off"></div><div class="fiab-dot off"></div><div class="fiab-dot off"></div>
-    <span class="fiab-label">Fiabilité 2/5</span>
-  </div>
-</div>
-<div id="tendances-grid"></div>
-
-<!-- ONGLETS -->
-<div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('agro',event)">Indicateurs agro</button>
-  <button class="tab-btn" onclick="switchTab('hourly',event)">Heure par heure</button>
-  <button class="tab-btn" onclick="switchTab('rain',event)">Cumuls pluie</button>
-</div>
-<div id="tab-agro" class="tab-panel active"><div id="agro-grid"></div></div>
-<div id="tab-hourly" class="tab-panel"><div class="hourly-scroll"><div class="hourly-chart" id="hourly-chart"></div></div></div>
-<div id="tab-rain" class="tab-panel"><div class="rain-bars" id="rain-bars"></div></div>
-```
+    <div id="tab-agro" class="tab-panel active"><div id="agro-grid"></div></div>
+    <div id="tab-hourly" class="tab-panel"><div class="hourly-scroll"><div class="hourly-chart" id="hourly-chart"></div></div></div>
+    <div id="tab-rain" class="tab-panel"><div class="rain-bars" id="rain-bars"></div></div>
 
   </div>
 </main>
@@ -545,7 +708,7 @@ footer { text-align: center; font-family: ‘DM Mono’, monospace; font-size: 0
 <footer>Données météo : Open-Meteo (ECMWF) · Température sol : modèle ERA5-Land · 48.30°N 0.27°E · Actualisé automatiquement</footer>
 
 <script>
-const LAT = 48.30, LON = 0.27;
+let LAT = 48.30, LON = 0.27, LOCATION_NAME = 'Courgains — Sarthe (72)';
 const SEUIL_SOL = 10; // °C
 const DAYS_CONSEC = 5; // jours consécutifs requis
 
@@ -610,20 +773,20 @@ function conseils(daily, cw) {
   return out;
 }
 
-async function load() {
+async function fetchAndRender() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('loading').innerHTML = '<div class="spinner"></div>Chargement des données météo et du sol…';
   try {
-    // Get past 7 days + forecast 16 days
     const today = new Date();
     const past7 = new Date(today); past7.setDate(today.getDate() - 7);
     const past7str = past7.toISOString().slice(0,10);
 
-    // Main forecast (16 days ahead)
     const urlForecast = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`
       + `&hourly=temperature_2m,precipitation,wind_speed_10m,weathercode,soil_temperature_6cm`
       + `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,et0_fao_evapotranspiration,weathercode,precipitation_probability_max`
       + `&current_weather=true&forecast_days=16&timezone=Europe%2FParis`;
 
-    // Historical last 7 days for soil temp chart
     const urlHistory = `https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}`
       + `&hourly=soil_temperature_6cm`
       + `&start_date=${past7str}&end_date=${today.toISOString().slice(0,10)}`
@@ -634,11 +797,105 @@ async function load() {
       fetch(urlHistory).then(r => r.json()),
     ]);
 
+    // Update location badge
+    document.getElementById('location-badge-text').textContent = '📍 ' + LOCATION_NAME;
+    // Mobile badge inside banner
+    const mob = document.getElementById('mobile-location');
+    mob.textContent = '📍 ' + LOCATION_NAME;
+    mob.style.display = window.innerWidth <= 640 ? 'block' : 'none';
     render(forecastData, histData);
   } catch(e) {
     console.error(e);
     document.getElementById('loading').innerHTML = '<p style="color:var(--danger)">❌ Impossible de charger les données météo.<br><small>Vérifiez votre connexion internet.</small></p>';
   }
+}
+
+// Geocoding via Open-Meteo geocoding API (free, no key)
+async function searchLocation(query) {
+  const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=fr&countryCode=FR`);
+  const data = await res.json();
+  return data.results || [];
+}
+
+function showResults(results) {
+  const list = document.getElementById('search-results');
+  if (!results.length) {
+    list.innerHTML = '<div class="search-result-item" style="color:var(--muted);cursor:default">Aucun résultat trouvé</div>';
+    list.style.display = 'block';
+    return;
+  }
+  list.innerHTML = results.map((r, i) => `
+    <div class="search-result-item" onclick="selectLocation(${i})" data-idx="${i}">
+      📍 <strong>${r.name}</strong> <span style="color:var(--muted);font-size:0.8em">${r.admin2 || ''} ${r.admin1 || ''}</span>
+    </div>
+  `).join('');
+  list.style.display = 'block';
+  window._searchResults = results;
+}
+
+function selectLocation(idx) {
+  const r = window._searchResults[idx];
+  LAT = r.latitude;
+  LON = r.longitude;
+  LOCATION_NAME = r.name + (r.admin2 ? ' — ' + r.admin2 : '') + (r.admin1 ? ' (' + r.admin1 + ')' : '');
+  document.getElementById('search-input').value = r.name;
+  document.getElementById('search-results').style.display = 'none';
+  // Save to localStorage
+  localStorage.setItem('meteo_lat', LAT);
+  localStorage.setItem('meteo_lon', LON);
+  localStorage.setItem('meteo_name', LOCATION_NAME);
+  fetchAndRender();
+}
+
+function useGPS() {
+  const btn = document.getElementById('btn-gps');
+  btn.textContent = '⏳';
+  btn.disabled = true;
+  if (!navigator.geolocation) {
+    alert('Géolocalisation non disponible sur ce navigateur');
+    btn.textContent = '📡';
+    btn.disabled = false;
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(async pos => {
+    LAT = parseFloat(pos.coords.latitude.toFixed(4));
+    LON = parseFloat(pos.coords.longitude.toFixed(4));
+    // Reverse geocode
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${LAT}&lon=${LON}&format=json&accept-language=fr`);
+      const data = await res.json();
+      const town = data.address.village || data.address.town || data.address.city || data.address.municipality || 'Ma position';
+      const dept = data.address.county || data.address.state || '';
+      LOCATION_NAME = town + (dept ? ' — ' + dept : '');
+    } catch(e) {
+      LOCATION_NAME = `Position GPS (${LAT}, ${LON})`;
+    }
+    localStorage.setItem('meteo_lat', LAT);
+    localStorage.setItem('meteo_lon', LON);
+    localStorage.setItem('meteo_name', LOCATION_NAME);
+    document.getElementById('search-input').value = LOCATION_NAME;
+    btn.textContent = '📡';
+    btn.disabled = false;
+    fetchAndRender();
+  }, err => {
+    alert('Impossible d\'obtenir la position GPS. Vérifiez les autorisations de localisation.');
+    btn.textContent = '📡';
+    btn.disabled = false;
+  }, { timeout: 10000 });
+}
+
+async function load() {
+  // Restore saved location
+  const savedLat = localStorage.getItem('meteo_lat');
+  const savedLon = localStorage.getItem('meteo_lon');
+  const savedName = localStorage.getItem('meteo_name');
+  if (savedLat && savedLon && savedName) {
+    LAT = parseFloat(savedLat);
+    LON = parseFloat(savedLon);
+    LOCATION_NAME = savedName;
+    document.getElementById('search-input').value = savedName;
+  }
+  fetchAndRender();
 }
 
 function render(data, histData) {
@@ -1010,8 +1267,27 @@ function switchTab(id, e) {
   e.target.classList.add('active');
 }
 
+// Search input handler
+let searchTimeout;
+document.getElementById('search-input').addEventListener('input', function() {
+  clearTimeout(searchTimeout);
+  const q = this.value.trim();
+  if (q.length < 2) { document.getElementById('search-results').style.display = 'none'; return; }
+  searchTimeout = setTimeout(async () => {
+    const results = await searchLocation(q);
+    showResults(results);
+  }, 350);
+});
+
+document.getElementById('search-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') document.getElementById('search-results').style.display = 'none';
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.search-wrap')) document.getElementById('search-results').style.display = 'none';
+});
+
 load();
 </script>
-
 </body>
 </html>
