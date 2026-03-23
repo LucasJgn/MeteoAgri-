@@ -3,2299 +3,1018 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Météo Agri</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Mono:wght@300;400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<title>Météo Agriculteur</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Mono:wght@400;500&family=Lato:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --soil: #3d2b1f; --soil-light: #5c4033; --wheat: #c9a84c; --wheat-light: #e8c96a;
-    --sky-deep: #7ab8d9; --green: #4a7c59; --green-light: #7ac87a; --rain: #4a6fa5;
-    --sun: #f5a623; --danger: #c0392b; --cream: #faf6ef; --text: #1a1208;
-    --muted: #7a6a55; --fog: #9a9080; --maize: #e8b84b; --maize-dark: #b8820a;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Lato', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
-
-  header { background: var(--soil); color: var(--cream); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--wheat); flex-wrap: wrap; gap: 12px; }
-  header .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; }
-  header .logo span { color: var(--wheat); }
-  header .subtitle { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: #bba080; margin-top: 2px; letter-spacing: 0.08em; text-transform: uppercase; }
-  header .location-badge { font-family: 'DM Mono', monospace; font-size: 0.75rem; background: var(--wheat); color: var(--soil); padding: 6px 14px; border-radius: 2px; font-weight: 500; }
-
-  /* SEARCH BAR */
-  .search-wrap { position: relative; display: flex; align-items: center; gap: 8px; flex: 1; max-width: 420px; }
-  .search-inner { position: relative; flex: 1; }
-  #search-input {
-    width: 100%;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.82rem;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(201,168,76,0.4);
-    border-radius: 3px;
-    color: var(--cream);
-    padding: 8px 36px 8px 12px;
-    outline: none;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  #search-input::placeholder { color: #9a8060; }
-  #search-input:focus { border-color: var(--wheat); background: rgba(255,255,255,0.15); }
-  .search-icon {
-    position: absolute;
-    right: 10px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.9rem;
-    opacity: 0.5;
-    pointer-events: none;
-  }
-  #btn-gps {
-    background: rgba(201,168,76,0.2);
-    border: 1px solid rgba(201,168,76,0.4);
-    border-radius: 3px;
-    color: var(--wheat-light);
-    padding: 8px 10px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.2s;
-    flex-shrink: 0;
-  }
-  #btn-gps:hover { background: rgba(201,168,76,0.35); }
-  #btn-gps:disabled { opacity: 0.5; cursor: default; }
-
-  #search-results {
-    display: none;
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0; right: 0;
-    background: #2a1e12;
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 3px;
-    z-index: 1000;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    max-height: 220px;
-    overflow-y: auto;
-  }
-
-  .search-result-item {
-    padding: 10px 14px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.78rem;
-    color: var(--cream);
-    cursor: pointer;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    transition: background 0.12s;
-  }
-  .search-result-item:last-child { border-bottom: none; }
-  .search-result-item:hover { background: rgba(201,168,76,0.15); }
-
-  main { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
-
-  #loading { text-align: center; padding: 80px 20px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.9rem; }
-  .spinner { width: 40px; height: 40px; border: 3px solid #e0d5c5; border-top-color: var(--wheat); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* CURRENT BANNER */
-  #current-banner { background: linear-gradient(135deg, var(--soil) 0%, var(--soil-light) 100%); border-radius: 4px; padding: 24px 28px; display: flex; align-items: center; gap: 32px; margin-bottom: 24px; border-left: 6px solid var(--wheat); color: var(--cream); flex-wrap: wrap; }
-  .current-temp { font-family: 'Playfair Display', serif; font-size: 4rem; font-weight: 700; color: var(--wheat-light); line-height: 1; }
-  .current-temp sup { font-size: 1.5rem; vertical-align: super; }
-  .current-desc { flex: 1; }
-  .weather-label { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--wheat-light); font-family: 'Playfair Display', serif; }
-  .current-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 8px; }
-  .current-meta .stat { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: #c8b89a; }
-  .current-meta .stat strong { color: var(--cream); font-size: 0.9rem; }
-  .date-now { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: #9a8060; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
-
-  .alert-box { background: #fff3cd; border: 1px solid var(--wheat); border-left: 5px solid var(--sun); border-radius: 3px; padding: 10px 16px; margin-bottom: 12px; font-size: 0.85rem; font-weight: 600; color: #7a5500; }
-  .alert-box.danger { background: #fde8e8; border-color: var(--danger); border-left-color: var(--danger); color: var(--danger); }
-
-  .section-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: var(--soil); border-bottom: 2px solid var(--wheat); padding-bottom: 6px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-
-  /* ============================================================
-     MODULE SEMIS MAÏS
-  ============================================================ */
-  #semis-module {
-    background: white;
-    border: 2px solid var(--maize);
-    border-radius: 4px;
-    margin-bottom: 28px;
-    overflow: hidden;
-  }
-
-  .semis-header {
-    background: linear-gradient(135deg, #3a2a08, #5c4010);
-    padding: 16px 22px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .semis-header-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--maize);
-    flex: 1;
-  }
-
-  .semis-header-title small {
-    display: block;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.62rem;
-    font-weight: 400;
-    color: #c8a860;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-top: 2px;
-  }
-
-  /* FEU TRICOLORE */
-  .semis-feu {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-
-  .feu-light-wrap {
-    background: #1a1208;
-    border-radius: 20px;
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    border: 2px solid #3a3020;
-  }
-
-  .feu-light {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    opacity: 0.15;
-    transition: opacity 0.4s, box-shadow 0.4s;
-  }
-
-  .feu-light.rouge  { background: #e74c3c; }
-  .feu-light.orange { background: #f39c12; }
-  .feu-light.vert   { background: #27ae60; }
-
-  .feu-light.on.rouge  { opacity: 1; box-shadow: 0 0 10px #e74c3c88; }
-  .feu-light.on.orange { opacity: 1; box-shadow: 0 0 10px #f39c1288; }
-  .feu-light.on.vert   { opacity: 1; box-shadow: 0 0 10px #27ae6088; }
-
-  .feu-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    font-weight: 500;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .feu-label.rouge  { color: #e74c3c; }
-  .feu-label.orange { color: #f39c12; }
-  .feu-label.vert   { color: #27ae60; }
-
-  .semis-verdict {
-    flex: 1;
-    padding: 4px 0;
-  }
-
-  .verdict-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .verdict-title.rouge  { color: #e74c3c; }
-  .verdict-title.orange { color: #f5b642; }
-  .verdict-title.vert   { color: var(--green-light); }
-
-  .verdict-detail {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: #c8a860;
-    line-height: 1.5;
-  }
-
-  /* CRITÈRES */
-  .semis-criteres {
-    padding: 16px 22px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    border-bottom: 1px solid #f0e8d0;
-  }
-
-  .critere-card {
-    border-radius: 3px;
-    padding: 12px 14px;
-    border: 1px solid #e8dfcf;
-    position: relative;
-  }
-
-  .critere-card.ok    { border-left: 4px solid var(--green); background: #f0faf2; }
-  .critere-card.warn  { border-left: 4px solid var(--sun); background: #fffbf0; }
-  .critere-card.block { border-left: 4px solid var(--danger); background: #fff5f5; }
-  .critere-card.na    { border-left: 4px solid #ccc; background: #fafafa; }
-
-  .critere-icon { font-size: 1.4rem; margin-bottom: 4px; }
-  .critere-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
-  .critere-value { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--soil); }
-  .critere-status { font-family: 'DM Mono', monospace; font-size: 0.65rem; margin-top: 3px; }
-  .critere-card.ok    .critere-status { color: var(--green); }
-  .critere-card.warn  .critere-status { color: #c07800; }
-  .critere-card.block .critere-status { color: var(--danger); }
-  .critere-card.na    .critere-status { color: var(--muted); }
-
-  /* GRAPHIQUE TEMPÉRATURE SOL */
-  .semis-graph-section {
-    padding: 16px 22px 20px;
-  }
-
-  .semis-graph-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .graph-legend {
-    display: flex;
-    gap: 16px;
-    margin-left: auto;
-    flex-wrap: wrap;
-  }
-
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.62rem;
-    color: var(--muted);
-  }
-
-  .legend-dot {
-    width: 10px; height: 3px; border-radius: 2px;
-  }
-
-  .soil-chart-wrap {
-    position: relative;
-    height: 140px;
-    background: #fdfaf5;
-    border: 1px solid #e8dfcf;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  /* SVG chart drawn by JS */
-  .soil-chart-wrap svg {
-    width: 100%; height: 100%;
-  }
-
-  /* Threshold line label */
-  .threshold-label {
-    position: absolute;
-    right: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.58rem;
-    color: var(--danger);
-    font-weight: 600;
-  }
-
-  .semis-graph-sub {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.62rem;
-    color: var(--muted);
-    margin-top: 6px;
-    text-align: center;
-    font-style: italic;
-  }
-
-  /* CONSEILS SEMIS */
-  .semis-conseils {
-    padding: 0 22px 16px;
-  }
-  .semis-conseil-item {
-    font-size: 0.82rem;
-    color: var(--text);
-    padding: 5px 0;
-    border-bottom: 1px solid #ede8e0;
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-  }
-  .semis-conseil-item:last-child { border-bottom: none; }
-  .semis-conseil-item::before { content: '▸'; color: var(--maize); flex-shrink: 0; margin-top: 1px; }
-
-  /* DATE CIBLE */
-  .semis-target {
-    margin: 0 22px 16px;
-    background: linear-gradient(135deg, #fef9ef, #fdf0d0);
-    border: 1px solid var(--maize);
-    border-radius: 3px;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .target-icon { font-size: 2rem; flex-shrink: 0; }
-
-  .target-text .target-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-  }
-
-  .target-text .target-date {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--maize-dark);
-    margin-top: 2px;
-  }
-
-  .target-text .target-range {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  /* 7-DAY FORECAST */
-  #forecast-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 6px; }
-  .day-card { background: white; border-radius: 3px; padding: 14px 10px; text-align: center; border: 1px solid #e8dfcf; border-top: 3px solid transparent; transition: transform 0.15s, box-shadow 0.15s; }
-  .day-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(61,43,31,0.1); }
-  .day-card.today { border-top-color: var(--wheat); background: #fef9ef; }
-  .day-card.rain-risk { border-top-color: var(--rain); }
-  .day-card.good-day { border-top-color: var(--green); }
-  .day-name { font-family: 'DM Mono', monospace; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
-  .day-card.today .day-name { color: var(--soil); font-weight: 700; }
-  .day-icon { font-size: 1.8rem; margin: 6px 0; }
-  .day-temps { display: flex; justify-content: center; gap: 6px; margin: 6px 0; }
-  .temp-max { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.1rem; color: var(--text); }
-  .temp-min { font-size: 0.9rem; color: var(--muted); align-self: flex-end; }
-  .day-rain { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--rain); margin-top: 4px; }
-  .day-rain.no-rain { color: var(--green); }
-  .day-etp { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); margin-top: 4px; }
-  .day-wind { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: #9a8060; margin-top: 3px; }
-
-  /* CONFIDENCE RULER */
-  .conf-label-row { display: flex; font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-bottom: 3px; margin-top: 10px; }
-  .conf-label-row span { flex: 1; }
-  .conf-label-row span:last-child { text-align: right; }
-  .conf-label-row span:nth-child(2) { text-align: center; }
-  .confidence-ruler { display: flex; height: 5px; border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
-  .conf-seg.high   { background: var(--green); flex: 7; }
-  .conf-seg.medium { background: var(--wheat); flex: 3; }
-  .conf-seg.low    { background: #c8a070; flex: 3; }
-  .conf-seg.vlow   { background: #ddc090; flex: 3; opacity: 0.55; }
-
-  /* TENDANCES */
-  .tendances-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 9px 14px; background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(154,144,128,0.05) 6px, rgba(154,144,128,0.05) 12px); border: 1px dashed #c8b89a; border-radius: 3px; flex-wrap: wrap; }
-  .tendances-badge { font-family: 'DM Mono', monospace; font-size: 0.62rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; background: var(--fog); color: white; padding: 3px 8px; border-radius: 2px; flex-shrink: 0; }
-  .tendances-disclaimer { font-family: 'DM Mono', monospace; font-size: 0.67rem; color: var(--muted); font-style: italic; flex: 1; }
-  .fiab-wrap { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
-  .fiab-dot { width: 8px; height: 8px; border-radius: 50%; }
-  .fiab-dot.on { background: var(--wheat); }
-  .fiab-dot.off { background: #ddd; }
-  .fiab-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); }
-
-  #tendances-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 7px; margin-bottom: 28px; }
-  .tend-card { background: white; border-radius: 3px; padding: 11px 7px; text-align: center; border: 1px dashed #d5cdbf; border-top: 3px solid #cdc5b5; position: relative; overflow: hidden; transition: opacity 0.15s; }
-  .tend-card:hover { opacity: 1 !important; }
-  .tend-card.tend-rain { border-top-color: #8aadc8; }
-  .tend-card.tend-dry  { border-top-color: #96b878; }
-  #tendances-grid .tend-card:nth-child(1) { opacity: 0.82; }
-  #tendances-grid .tend-card:nth-child(2) { opacity: 0.76; }
-  #tendances-grid .tend-card:nth-child(3) { opacity: 0.70; }
-  #tendances-grid .tend-card:nth-child(4) { opacity: 0.64; }
-  #tendances-grid .tend-card:nth-child(5) { opacity: 0.58; }
-  #tendances-grid .tend-card:nth-child(6) { opacity: 0.51; }
-  #tendances-grid .tend-card:nth-child(7) { opacity: 0.44; }
-  #tendances-grid .tend-card:nth-child(8) { opacity: 0.38; }
-  #tendances-grid .tend-card:nth-child(9) { opacity: 0.32; }
-  .tend-uncertainty { position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(180,168,150,0.07) 5px, rgba(180,168,150,0.07) 10px); pointer-events: none; }
-  .tend-name { font-family: 'DM Mono', monospace; font-size: 0.63rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: #9a8878; margin-bottom: 5px; }
-  .tend-icon { font-size: 1.45rem; margin: 3px 0; filter: grayscale(25%); }
-  .tend-temps { display: flex; justify-content: center; gap: 4px; margin: 4px 0; }
-  .tend-tmax { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 0.98rem; color: #5a4a3a; }
-  .tend-tmin { font-size: 0.8rem; color: #9a8878; align-self: flex-end; }
-  .tend-rain-val { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: #7090b0; margin-top: 2px; }
-  .tend-rain-val.dry { color: #7aaa60; }
-
-  /* CONSEIL */
-  #conseil-box { background: linear-gradient(135deg, #f0ede6, white); border: 1px solid #ddd4c0; border-left: 5px solid var(--green); border-radius: 3px; padding: 16px 20px; margin-bottom: 24px; }
-  .conseil-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--green); margin-bottom: 10px; }
-  .conseil-list { list-style: none; }
-  .conseil-list li { font-size: 0.85rem; color: var(--text); padding: 5px 0; border-bottom: 1px solid #ede8e0; display: flex; gap: 8px; }
-  .conseil-list li:last-child { border-bottom: none; }
-  .conseil-list li::before { content: '▸'; color: var(--wheat); flex-shrink: 0; margin-top: 1px; }
-
-  /* AGRO */
-  #agro-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
-  .agro-card { background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 16px 18px; }
-  .agro-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; }
-  .agro-value { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; color: var(--soil); line-height: 1; }
-  .agro-unit { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
-  .agro-bar { height: 4px; background: #e8dfcf; border-radius: 2px; margin-top: 10px; overflow: hidden; }
-  .agro-bar-fill { height: 100%; border-radius: 2px; background: var(--wheat); }
-  .agro-bar-fill.green { background: var(--green); }
-  .agro-bar-fill.rain { background: var(--rain); }
-  .agro-bar-fill.danger { background: var(--danger); }
-  .agro-interpretation { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
-
-  /* TABS */
-  .tabs { display: flex; margin-bottom: 16px; border-bottom: 2px solid #e8dfcf; }
-  .tab-btn { font-family: 'DM Mono', monospace; font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 18px; background: none; border: none; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; }
-  .tab-btn.active { color: var(--soil); border-bottom-color: var(--wheat); }
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
-
-  /* HOURLY */
-  .hourly-scroll { overflow-x: auto; padding-bottom: 8px; }
-  .hourly-chart { display: flex; min-width: 800px; align-items: flex-end; height: 120px; background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 12px 8px 8px; }
-  .hourly-col { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
-  .hourly-bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; justify-content: center; }
-  .hourly-bar { width: 70%; border-radius: 2px 2px 0 0; background: var(--sky-deep); opacity: 0.7; min-height: 2px; }
-  .hourly-time { font-family: 'DM Mono', monospace; font-size: 0.55rem; color: var(--muted); margin-top: 4px; }
-  .hourly-temp { font-family: 'DM Mono', monospace; font-size: 0.6rem; font-weight: 500; color: var(--soil); position: absolute; top: -16px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
-
-  /* RAIN */
-  .rain-bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; background: white; border: 1px solid #e8dfcf; border-radius: 3px; padding: 10px 12px 8px; }
-  .rain-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-  .rain-bar-val { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--rain); }
-  .rain-bar-fill { width: 100%; background: var(--rain); border-radius: 2px 2px 0 0; opacity: 0.75; min-height: 2px; }
-  .rain-bar-day { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); }
-
-  footer { text-align: center; font-family: 'DM Mono', monospace; font-size: 0.65rem; color: #bbb; padding: 20px; border-top: 1px solid #e8dfcf; margin-top: 12px; }
-
-  /* ── TABLET ── */
-  @media (max-width: 960px) {
-    #forecast-grid       { grid-template-columns: repeat(4, 1fr); }
-    #tendances-grid      { grid-template-columns: repeat(5, 1fr); }
-    #agro-grid           { grid-template-columns: repeat(2, 1fr); }
-    .semis-criteres      { grid-template-columns: repeat(2, 1fr); }
-    .search-wrap         { max-width: 300px; }
-  }
-
-  /* ── MOBILE (iPhone SE → 14 Pro Max) ── */
-  @media (max-width: 640px) {
-    /* Header */
-    header               { padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 10px; }
-    header > div:first-child { display: flex; align-items: center; justify-content: space-between; }
-    header .logo         { font-size: 1.1rem; }
-    header .subtitle     { display: none; }
-    .location-badge      { display: none; } /* remplacé par le badge dans le banner */
-    .search-wrap         { max-width: 100%; }
-    #search-input        { font-size: 1rem; padding: 10px 36px 10px 12px; } /* touch-friendly */
-    #btn-gps             { padding: 10px 14px; font-size: 1.1rem; }
-
-    /* Main padding */
-    main                 { padding: 14px 12px; }
-
-    /* Current banner */
-    #current-banner      { padding: 16px 16px; gap: 16px; }
-    .current-temp        { font-size: 3rem; }
-    .current-meta        { gap: 12px; }
-    .current-meta .stat  { font-size: 0.72rem; }
-
-    /* Conseil */
-    #conseil-box         { padding: 12px 14px; }
-    .conseil-list li     { font-size: 0.82rem; }
-
-    /* Semis module */
-    .semis-header        { padding: 12px 14px; flex-wrap: wrap; gap: 10px; }
-    .semis-header-title  { font-size: 1rem; width: 100%; }
-    .semis-header-title small { font-size: 0.6rem; }
-    .semis-feu           { flex-direction: row; align-items: center; gap: 10px; }
-    .feu-light-wrap      { flex-direction: row; padding: 5px 8px; gap: 8px; border-radius: 20px; }
-    .feu-light           { width: 18px; height: 18px; }
-    .semis-verdict       { flex: 1; }
-    .verdict-title       { font-size: 1rem; }
-    .verdict-detail      { font-size: 0.68rem; }
-    .semis-criteres      { grid-template-columns: 1fr 1fr; padding: 12px 14px; gap: 8px; }
-    .critere-card        { padding: 10px 10px; }
-    .critere-icon        { font-size: 1.1rem; }
-    .critere-value       { font-size: 1.1rem; }
-    .semis-target        { margin: 0 14px 12px; padding: 10px 12px; }
-    .target-icon         { font-size: 1.5rem; }
-    .target-text .target-date { font-size: 1rem; }
-    .semis-graph-section { padding: 12px 14px 14px; }
-    .semis-graph-title   { font-size: 0.65rem; flex-direction: column; align-items: flex-start; gap: 6px; }
-    .graph-legend        { margin-left: 0; gap: 10px; }
-    .soil-chart-wrap     { height: 110px; }
-    .semis-conseils      { padding: 0 14px 12px; }
-    .semis-conseil-item  { font-size: 0.78rem; }
-
-    /* Forecast grid — 4 jours visibles, scroll horizontal pour les autres */
-    #forecast-grid       { grid-template-columns: repeat(4, minmax(72px, 1fr)); overflow-x: auto; padding-bottom: 4px; }
-    .day-card            { padding: 10px 6px; }
-    .day-icon            { font-size: 1.4rem; }
-    .temp-max            { font-size: 0.95rem; }
-    .day-etp             { display: none; } /* masqué sur mobile pour alléger */
-
-    /* Tendances — 3 colonnes sur mobile */
-    #tendances-grid      { grid-template-columns: repeat(3, 1fr); gap: 5px; }
-    .tend-card           { padding: 8px 5px; }
-    .tend-icon           { font-size: 1.1rem; }
-    .tend-tmax           { font-size: 0.85rem; }
-    .tendances-header    { padding: 8px 10px; }
-    .tendances-disclaimer { font-size: 0.62rem; }
-
-    /* Agro indicators — 2 colonnes */
-    #agro-grid           { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .agro-value          { font-size: 1.5rem; }
-
-    /* Tabs */
-    .tab-btn             { padding: 10px 12px; font-size: 0.68rem; }
-
-    /* Section titles */
-    .section-title       { font-size: 0.95rem; }
-
-    /* Confidence ruler labels */
-    .conf-label-row      { font-size: 0.55rem; }
-  }
-
-  /* ── VERY SMALL (iPhone SE 1st gen, 320px) ── */
-  @media (max-width: 360px) {
-    #forecast-grid       { grid-template-columns: repeat(3, minmax(68px, 1fr)); }
-    .semis-criteres      { grid-template-columns: 1fr 1fr; }
-    #tendances-grid      { grid-template-columns: repeat(3, 1fr); }
-    #agro-grid           { grid-template-columns: 1fr 1fr; }
-    .tab-btn             { padding: 9px 8px; font-size: 0.62rem; letter-spacing: 0; }
-  }
-
-  .fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
-  @keyframes fadeIn { to { opacity: 1; } }
-
-  /* ============================================================
-     MODULE MALADIES CÉRÉALES
-  ============================================================ */
-  #maladies-module {
-    background: white;
-    border: 1px solid #e8dfcf;
-    border-radius: 4px;
-    margin-bottom: 24px;
-    overflow: hidden;
-  }
-  .module-header {
-    background: linear-gradient(135deg, #1e2d1a, #2d4025);
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .module-header-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #a8d890;
-    flex: 1;
-  }
-  .module-header-title small {
-    display: block;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.6rem;
-    color: #7aaa60;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-top: 2px;
-    font-weight: 400;
-  }
-  .module-header-alt {
-    background: linear-gradient(135deg, #1a2535, #253545);
-  }
-  .module-header-alt .module-header-title { color: #90c8e8; }
-  .module-header-alt .module-header-title small { color: #6aaac8; }
-
-  .maladies-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0;
-  }
-  .maladie-card {
-    padding: 16px 18px;
-    border-right: 1px solid #f0e8d8;
-    border-bottom: 1px solid #f0e8d8;
-  }
-  .maladie-card:nth-child(3n) { border-right: none; }
-  .maladie-card:nth-last-child(-n+3) { border-bottom: none; }
-
-  .maladie-name {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-  .maladie-risk-wrap {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .maladie-icon { font-size: 1.6rem; }
-  .maladie-risk-label {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-  }
-  .risk-faible  { color: var(--green); }
-  .risk-modere  { color: #c07800; }
-  .risk-eleve   { color: var(--danger); }
-
-  .maladie-detail {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-  .maladie-bar {
-    height: 3px;
-    background: #e8dfcf;
-    border-radius: 2px;
-    margin-top: 8px;
-    overflow: hidden;
-  }
-  .maladie-bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.6s ease;
-  }
-  .maladie-bar-fill.faible  { background: var(--green); }
-  .maladie-bar-fill.modere  { background: var(--sun); }
-  .maladie-bar-fill.eleve   { background: var(--danger); }
-
-  /* ============================================================
-     MODULE PLANNING TRAITEMENT 48H
-  ============================================================ */
-  #traitement-module {
-    background: white;
-    border: 1px solid #e8dfcf;
-    border-radius: 4px;
-    margin-bottom: 24px;
-    overflow: hidden;
-  }
-  .traitement-scroll { overflow-x: auto; }
-  .traitement-timeline {
-    display: flex;
-    min-width: 700px;
-    padding: 12px 16px 8px;
-    gap: 3px;
-  }
-  .traitement-slot {
-    flex: 1;
-    min-width: 28px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-  }
-  .slot-bar {
-    width: 100%;
-    height: 36px;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    transition: opacity 0.2s;
-    position: relative;
-  }
-  .slot-bar.vert   { background: #d4f0da; border: 1px solid #7ac87a; }
-  .slot-bar.orange { background: #fff0cc; border: 1px solid #f5a623; }
-  .slot-bar.rouge  { background: #fde8e8; border: 1px solid #e74c3c; }
-  .slot-bar.passe  { background: #f0ede6; border: 1px solid #d8cfbf; opacity: 0.5; }
-
-  .slot-hour {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.55rem;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-  .slot-temp {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.58rem;
-    color: var(--soil);
-    font-weight: 500;
-  }
-  .traitement-legend {
-    display: flex;
-    gap: 16px;
-    padding: 0 16px 12px;
-    flex-wrap: wrap;
-  }
-  .tleg-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-  }
-  .tleg-dot {
-    width: 12px; height: 12px;
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
-  .traitement-criteres {
-    display: flex;
-    gap: 8px;
-    padding: 0 16px 12px;
-    flex-wrap: wrap;
-  }
-  .trit-badge {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    padding: 4px 10px;
-    border-radius: 20px;
-    background: #f0ede6;
-    color: var(--muted);
-    border: 1px solid #e0d8c8;
-  }
-  .trit-badge.ok { background: #d4f0da; color: var(--green); border-color: #7ac87a; }
-  .trit-badge.warn { background: #fff0cc; color: #a06000; border-color: #f5a623; }
-  .trit-badge.block { background: #fde8e8; color: var(--danger); border-color: #e74c3c; }
-
-  /* ============================================================
-     MODULE CUMUL PLUIE VS NORMALES
-  ============================================================ */
-  #pluie-module {
-    background: white;
-    border: 1px solid #e8dfcf;
-    border-radius: 4px;
-    margin-bottom: 24px;
-    overflow: hidden;
-  }
-  .pluie-content { padding: 16px 20px 20px; }
-  .pluie-bilan {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .pluie-bilan-card {
-    background: #fdfaf5;
-    border: 1px solid #e8dfcf;
-    border-radius: 3px;
-    padding: 12px 14px;
-    text-align: center;
-  }
-  .pluie-bilan-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-  .pluie-bilan-val {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--soil);
-    line-height: 1;
-  }
-  .pluie-bilan-unit { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); margin-top: 3px; }
-  .pluie-bilan-diff {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    font-weight: 600;
-    margin-top: 5px;
-  }
-  .pluie-bilan-diff.excess { color: var(--rain); }
-  .pluie-bilan-diff.deficit { color: var(--danger); }
-  .pluie-bilan-diff.normal { color: var(--green); }
-
-  .pluie-chart-wrap {
-    height: 120px;
-    background: #fdfaf5;
-    border: 1px solid #e8dfcf;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 8px;
-  }
-  .pluie-chart-sub {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.62rem;
-    color: var(--muted);
-    text-align: center;
-    font-style: italic;
-  }
-
-  /* ============================================================
-     MODULE DJC
-  ============================================================ */
-  #djc-module {
-    background: white;
-    border: 1px solid #e8dfcf;
-    border-radius: 4px;
-    margin-bottom: 24px;
-    overflow: hidden;
-  }
-  .djc-content { padding: 16px 20px 20px; }
-  .djc-cultures {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-  .djc-culture-card {
-    border: 1px solid #e8dfcf;
-    border-radius: 3px;
-    padding: 14px 16px;
-    border-left: 4px solid var(--wheat);
-  }
-  .djc-culture-card.mais { border-left-color: var(--maize); }
-  .djc-culture-card.colza { border-left-color: #7ac87a; }
-  .djc-culture-card.ble { border-left-color: #c9a84c; }
-  .djc-culture-card.orge { border-left-color: #a09060; }
-
-  .djc-culture-name {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-  .djc-stade {
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--soil);
-    margin-bottom: 6px;
-  }
-  .djc-value {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-  .djc-bar-wrap { background: #e8dfcf; height: 5px; border-radius: 3px; overflow: hidden; }
-  .djc-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
-  .djc-bar-fill.mais  { background: var(--maize); }
-  .djc-bar-fill.ble   { background: #c9a84c; }
-  .djc-bar-fill.orge  { background: #a09060; }
-  .djc-bar-fill.colza { background: #7ac87a; }
-  .djc-next-stade {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.62rem;
-    color: var(--muted);
-    margin-top: 6px;
-  }
-  .djc-chart-wrap {
-    height: 110px;
-    background: #fdfaf5;
-    border: 1px solid #e8dfcf;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 6px;
-  }
-  .djc-note {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.62rem;
-    color: var(--muted);
-    text-align: center;
-    font-style: italic;
-  }
-  .djc-date-input-wrap {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .djc-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); }
-  .djc-input {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.78rem;
-    padding: 6px 10px;
-    border: 1px solid #e8dfcf;
-    border-radius: 3px;
-    background: white;
-    color: var(--text);
-    outline: none;
-  }
-  .djc-input:focus { border-color: var(--wheat); }
-  .djc-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    padding: 6px 14px;
-    background: var(--wheat);
-    color: var(--soil);
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-weight: 700;
-  }
-
-  /* RESPONSIVE pour les nouveaux modules */
-  @media (max-width: 640px) {
-    .maladies-grid       { grid-template-columns: 1fr 1fr; }
-    .maladie-card:nth-child(2n) { border-right: none; }
-    .maladie-card:nth-child(3n) { border-right: 1px solid #f0e8d8; }
-    .pluie-bilan         { grid-template-columns: 1fr 1fr; }
-    .djc-cultures        { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .djc-culture-card    { padding: 10px 12px; }
-    .traitement-timeline { min-width: 600px; }
-  }
+:root{--soil:#3d2b1f;--soil2:#5c4033;--wheat:#c9a84c;--wheat2:#e8c96a;--green:#4a7c59;--rain:#4a6fa5;--sun:#f5a623;--danger:#c0392b;--cream:#faf6ef;--text:#1a1208;--muted:#7a6a55;--maize:#e8b84b;--maize2:#b8820a}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--text)}
+header{background:var(--soil);padding:12px 18px;border-bottom:4px solid var(--wheat);display:flex;flex-direction:column;gap:10px}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-family:'Playfair Display',serif;font-size:1.25rem;color:#faf6ef;flex-shrink:0}
+.logo b{color:var(--wheat)}
+.loc-badge{font-family:'DM Mono',monospace;font-size:.68rem;background:var(--wheat);color:var(--soil);padding:4px 10px;border-radius:2px;white-space:nowrap;display:none}
+@media(min-width:640px){.loc-badge{display:block}}
+.search-row{display:flex;gap:8px}
+.search-inner{position:relative;flex:1}
+#q{width:100%;font-family:'DM Mono',monospace;font-size:.9rem;background:rgba(255,255,255,.12);border:1px solid rgba(201,168,76,.4);border-radius:3px;color:#faf6ef;padding:9px 36px 9px 12px;outline:none}
+#q::placeholder{color:#9a8060}
+#q:focus{border-color:var(--wheat);background:rgba(255,255,255,.18)}
+.srch-ico{position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:.45;pointer-events:none;font-size:.9rem}
+#btn-gps{background:rgba(201,168,76,.18);border:1px solid rgba(201,168,76,.4);border-radius:3px;color:var(--wheat2);padding:9px 12px;cursor:pointer;font-size:1rem;flex-shrink:0}
+#sr{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#2a1e12;border:1px solid rgba(201,168,76,.3);border-radius:3px;z-index:999;max-height:200px;overflow-y:auto}
+.sri{padding:10px 14px;font-family:'DM Mono',monospace;font-size:.78rem;color:#faf6ef;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06)}
+.sri:hover{background:rgba(201,168,76,.15)}
+main{max-width:1100px;margin:0 auto;padding:14px 14px 40px}
+#loading{text-align:center;padding:60px 20px;font-family:'DM Mono',monospace;font-size:.88rem;color:var(--muted)}
+.spinner{width:36px;height:36px;border:3px solid #e0d5c5;border-top-color:var(--wheat);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#content{display:none}
+.alert{background:#fff3cd;border-left:5px solid var(--sun);border-radius:3px;padding:10px 14px;margin-bottom:10px;font-size:.84rem;font-weight:700;color:#7a5500}
+.alert.danger{background:#fde8e8;border-left-color:var(--danger);color:var(--danger)}
+#banner{background:linear-gradient(135deg,var(--soil),var(--soil2));border-left:6px solid var(--wheat);border-radius:4px;padding:20px 22px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;color:#faf6ef;margin-bottom:20px}
+.cur-temp{font-family:'Playfair Display',serif;font-size:3.8rem;font-weight:700;color:var(--wheat2);line-height:1;flex-shrink:0}
+.cur-temp sup{font-size:1.4rem;vertical-align:super}
+.cur-info{flex:1;min-width:180px}
+.cur-date{font-family:'DM Mono',monospace;font-size:.65rem;color:#9a8060;text-transform:uppercase;letter-spacing:.1em}
+.cur-loc{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--wheat2);margin:2px 0 4px;display:none}
+@media(max-width:639px){.cur-loc{display:block}}
+.cur-label{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--wheat2);margin-bottom:8px}
+.cur-stats{display:flex;flex-wrap:wrap;gap:14px}
+.cs{font-family:'DM Mono',monospace;font-size:.72rem;color:#c8b89a}
+.cs strong{display:block;font-size:.88rem;color:#faf6ef}
+#conseil{background:linear-gradient(135deg,#f0ede6,#fff);border:1px solid #ddd4c0;border-left:5px solid var(--green);border-radius:3px;padding:14px 18px;margin-bottom:20px}
+.c-title{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:700;color:var(--green);margin-bottom:8px}
+#conseil ul{list-style:none}
+#conseil li{font-size:.84rem;padding:4px 0;border-bottom:1px solid #ede8e0;display:flex;gap:7px}
+#conseil li:last-child{border-bottom:none}
+#conseil li::before{content:'▸';color:var(--wheat);flex-shrink:0}
+.stitle{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--soil);border-bottom:2px solid var(--wheat);padding-bottom:5px;margin-bottom:14px}
+#semis{background:white;border:2px solid var(--maize);border-radius:4px;margin-bottom:22px;overflow:hidden}
+.semis-hdr{background:linear-gradient(135deg,#3a2a08,#5c4010);padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.semis-htitle{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--maize);flex:1}
+.semis-htitle small{display:block;font-family:'DM Mono',monospace;font-size:.58rem;color:#c8a860;text-transform:uppercase;letter-spacing:.07em;margin-top:2px;font-weight:400}
+.feu-wrap{background:#1a1208;border-radius:18px;padding:5px 7px;display:flex;flex-direction:column;gap:4px;border:2px solid #3a3020;flex-shrink:0}
+@media(max-width:639px){.feu-wrap{flex-direction:row}}
+.fl{width:20px;height:20px;border-radius:50%;opacity:.15;transition:opacity .3s,box-shadow .3s}
+.fl.r{background:#e74c3c}.fl.o{background:#f39c12}.fl.g{background:#27ae60}
+.fl.on.r{opacity:1;box-shadow:0 0 10px #e74c3c88}
+.fl.on.o{opacity:1;box-shadow:0 0 10px #f39c1288}
+.fl.on.g{opacity:1;box-shadow:0 0 10px #27ae6088}
+.semis-verdict{flex:1}
+.vt{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;margin-bottom:3px}
+.vt.r{color:#e74c3c}.vt.o{color:#f5b642}.vt.g{color:#7ac87a}
+.vd{font-family:'DM Mono',monospace;font-size:.68rem;color:#c8a860;line-height:1.5;white-space:pre-line}
+.semis-crit{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #f0e8d0}
+@media(max-width:639px){.semis-crit{grid-template-columns:1fr 1fr}}
+.crit-card{padding:12px 14px;border-right:1px solid #f0e8d0}
+.crit-card:last-child{border-right:none}
+@media(max-width:639px){.crit-card:nth-child(2n){border-right:none}}
+.crit-card.ok{border-left:4px solid var(--green)}.crit-card.warn{border-left:4px solid var(--sun)}.crit-card.block{border-left:4px solid var(--danger)}
+.cc-ico{font-size:1.3rem;margin-bottom:3px}
+.cc-lbl{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.cc-val{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--soil)}
+.cc-st{font-family:'DM Mono',monospace;font-size:.62rem;margin-top:2px}
+.crit-card.ok .cc-st{color:var(--green)}.crit-card.warn .cc-st{color:#c07800}.crit-card.block .cc-st{color:var(--danger)}
+.semis-target{margin:14px 18px;background:linear-gradient(135deg,#fef9ef,#fdf0d0);border:1px solid var(--maize);border-radius:3px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.target-ico{font-size:1.8rem;flex-shrink:0}
+.target-lbl{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.target-date{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--maize2);margin:2px 0}
+.target-range{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted)}
+.semis-graph{padding:14px 18px 18px}
+.graph-title{font-family:'DM Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+.graph-wrap{height:130px;background:#fdfaf5;border:1px solid #e8dfcf;border-radius:3px;overflow:hidden}
+.graph-sub{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);text-align:center;margin-top:5px;font-style:italic}
+.semis-tips{padding:0 18px 14px}
+.stip{font-size:.82rem;padding:5px 0;border-bottom:1px solid #ede8e0;display:flex;gap:7px}
+.stip:last-child{border-bottom:none}
+.stip::before{content:'▸';color:var(--maize);flex-shrink:0}
+#forecast{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px}
+@media(max-width:639px){#forecast{grid-template-columns:repeat(4,minmax(68px,1fr));overflow-x:auto}}
+.dc{background:white;border-radius:3px;padding:12px 8px;text-align:center;border:1px solid #e8dfcf;border-top:3px solid transparent}
+.dc.today{border-top-color:var(--wheat);background:#fef9ef}.dc.wet{border-top-color:var(--rain)}.dc.dry{border-top-color:var(--green)}
+.dc-day{font-family:'DM Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.dc.today .dc-day{color:var(--soil);font-weight:700}
+.dc-ico{font-size:1.6rem;margin:4px 0}
+.dc-temps{display:flex;justify-content:center;gap:5px;margin:4px 0}
+.tmax{font-family:'Playfair Display',serif;font-weight:700;font-size:1.05rem}
+.tmin{font-size:.85rem;color:var(--muted);align-self:flex-end}
+.dc-rain{font-family:'DM Mono',monospace;font-size:.66rem;color:var(--rain);margin-top:3px}
+.dc-rain.ok{color:var(--green)}
+.dc-etp{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);margin-top:2px}
+@media(max-width:639px){.dc-etp{display:none}}
+.conf-labels{display:flex;font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);margin:8px 0 3px}
+.conf-labels span{flex:1}.conf-labels span:nth-child(2){text-align:center}.conf-labels span:last-child{text-align:right}
+.conf-bar{display:flex;height:5px;border-radius:3px;overflow:hidden;margin-bottom:16px}
+.cb-h{background:var(--green);flex:7}.cb-m{background:var(--wheat);flex:3}.cb-l{background:#c8a070;flex:3}.cb-v{background:#ddc090;flex:3;opacity:.55}
+.tend-hdr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(154,144,128,.05) 6px,rgba(154,144,128,.05) 12px);border:1px dashed #c8b89a;border-radius:3px;margin-bottom:10px}
+.tend-badge{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;background:#9a9080;color:white;padding:3px 8px;border-radius:2px;flex-shrink:0}
+.tend-disc{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);font-style:italic;flex:1}
+.fiab{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.fd{width:8px;height:8px;border-radius:50%}.fd.on{background:var(--wheat)}.fd.off{background:#ddd}
+.fiab-txt{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted)}
+#tendances{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin-bottom:24px}
+@media(max-width:639px){#tendances{grid-template-columns:repeat(3,1fr)}}
+.tc{background:white;border-radius:3px;padding:10px 6px;text-align:center;border:1px dashed #d5cdbf;border-top:3px solid #cdc5b5;overflow:hidden;transition:opacity .15s}
+.tc.wet{border-top-color:#8aadc8}.tc.dry{border-top-color:#96b878}.tc:hover{opacity:1!important}
+#tendances .tc:nth-child(1){opacity:.82}#tendances .tc:nth-child(2){opacity:.76}#tendances .tc:nth-child(3){opacity:.70}
+#tendances .tc:nth-child(4){opacity:.64}#tendances .tc:nth-child(5){opacity:.58}#tendances .tc:nth-child(6){opacity:.51}
+#tendances .tc:nth-child(7){opacity:.44}#tendances .tc:nth-child(8){opacity:.38}#tendances .tc:nth-child(9){opacity:.32}
+.tc-day{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;color:#9a8878;margin-bottom:4px}
+.tc-ico{font-size:1.3rem;margin:2px 0;filter:grayscale(20%)}
+.tc-temps{display:flex;justify-content:center;gap:4px;margin:3px 0}
+.tc-tmax{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:#5a4a3a}
+.tc-tmin{font-size:.78rem;color:#9a8878;align-self:flex-end}
+.tc-rain{font-family:'DM Mono',monospace;font-size:.6rem;color:#7090b0;margin-top:2px}
+.tc-rain.dry{color:#7aaa60}
+.mod{background:white;border:1px solid #e8dfcf;border-radius:4px;margin-bottom:22px;overflow:hidden}
+.mod-hdr{padding:13px 18px}
+.mod-hdr-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700}
+.mod-hdr-title small{display:block;font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.07em;margin-top:2px;font-weight:400;opacity:.75}
+.mal-grid{display:grid;grid-template-columns:repeat(3,1fr)}
+@media(max-width:639px){.mal-grid{grid-template-columns:1fr 1fr}}
+.mal-card{padding:12px 14px;border-right:1px solid #f0e8d8;border-bottom:1px solid #f0e8d8}
+.mal-card:nth-child(3n){border-right:none}
+@media(max-width:639px){.mal-card:nth-child(2n){border-right:none}}
+.mal-name{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.mal-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.mal-ico{font-size:1.4rem}
+.mal-risk{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700}
+.rf{color:var(--green)}.rm{color:#c07800}.re{color:var(--danger)}
+.mal-detail{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted)}
+.mal-bar{height:3px;background:#e8dfcf;border-radius:2px;margin-top:6px;overflow:hidden}
+.mal-fill{height:100%;border-radius:2px}
+.mf-f{background:var(--green)}.mf-m{background:var(--sun)}.mf-e{background:var(--danger)}
+.trt-now{display:flex;gap:6px;flex-wrap:wrap;padding:8px 18px 4px}
+.tb{font-family:'DM Mono',monospace;font-size:.63rem;padding:4px 10px;border-radius:20px;background:#f0ede6;color:var(--muted);border:1px solid #e0d8c8}
+.tb.ok{background:#d4f0da;color:var(--green);border-color:#7ac87a}
+.tb.warn{background:#fff0cc;color:#a06000;border-color:var(--sun)}
+.tb.bad{background:#fde8e8;color:var(--danger);border-color:var(--danger)}
+.trt-scroll{overflow-x:auto}
+.trt-line{display:flex;min-width:680px;padding:8px 14px 4px;gap:3px}
+.trt-slot{flex:1;min-width:22px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.trt-bar{width:100%;height:32px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.7rem}
+.trt-bar.v{background:#d4f0da;border:1px solid #7ac87a}
+.trt-bar.o{background:#fff0cc;border:1px solid var(--sun)}
+.trt-bar.r{background:#fde8e8;border:1px solid var(--danger)}
+.trt-bar.p{background:#f0ede6;border:1px solid #d8cfbf;opacity:.5}
+.trt-h{font-family:'DM Mono',monospace;font-size:.5rem;color:var(--muted)}
+.trt-t{font-family:'DM Mono',monospace;font-size:.54rem;color:var(--soil)}
+.trt-legend{display:flex;gap:14px;padding:4px 14px 12px;flex-wrap:wrap}
+.tleg{display:flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted)}
+.tleg-dot{width:11px;height:11px;border-radius:2px;flex-shrink:0}
+.pluie-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 18px 10px}
+@media(max-width:639px){.pluie-stats{grid-template-columns:1fr 1fr}}
+.pstat{background:#fdfaf5;border:1px solid #e8dfcf;border-radius:3px;padding:10px 12px;text-align:center}
+.pstat-lbl{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px}
+.pstat-val{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--soil)}
+.pstat-unit{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);margin-top:2px}
+.pstat-diff{font-family:'DM Mono',monospace;font-size:.68rem;font-weight:700;margin-top:4px}
+.pd-ex{color:var(--rain)}.pd-def{color:var(--danger)}.pd-ok{color:var(--green)}
+.pluie-graph{height:110px;background:#fdfaf5;border:1px solid #e8dfcf;border-radius:3px;overflow:hidden;margin:0 18px 8px}
+.pluie-note{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);text-align:center;margin:0 18px 14px;font-style:italic}
+.djc-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 18px 8px}
+.djc-lbl{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);flex-shrink:0}
+#djc-date{font-family:'DM Mono',monospace;font-size:.8rem;padding:6px 10px;border:1px solid #e8dfcf;border-radius:3px;background:white;color:var(--text);outline:none}
+#djc-date:focus{border-color:var(--wheat)}
+.djc-btn{font-family:'DM Mono',monospace;font-size:.7rem;padding:6px 14px;background:var(--wheat);color:var(--soil);border:none;border-radius:3px;cursor:pointer;font-weight:700}
+#djc-hint{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--maize2)}
+.djc-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 18px 14px}
+@media(max-width:639px){.djc-cards{grid-template-columns:1fr 1fr;gap:8px}}
+.djc-card{border:1px solid #e8dfcf;border-radius:3px;padding:12px 14px}
+.djc-card.mais{border-left:4px solid var(--maize)}.djc-card.ble{border-left:4px solid var(--wheat)}
+.djc-card.orge{border-left:4px solid #a09060}.djc-card.colza{border-left:4px solid #7ac87a}
+.djc-cn{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:3px}
+.djc-stade{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:var(--soil);margin-bottom:4px}
+.djc-val{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text);margin-bottom:5px}
+.djc-bar{background:#e8dfcf;height:4px;border-radius:3px;overflow:hidden}
+.djc-fill{height:100%;border-radius:3px}
+.djc-fill.mais{background:var(--maize)}.djc-fill.ble{background:var(--wheat)}
+.djc-fill.orge{background:#a09060}.djc-fill.colza{background:#7ac87a}
+.djc-next{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);margin-top:5px}
+.djc-graph{height:100px;background:#fdfaf5;border:1px solid #e8dfcf;border-radius:3px;overflow:hidden;margin:0 18px 6px}
+.djc-note{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);text-align:center;margin:0 18px 14px;font-style:italic}
+.agro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+@media(max-width:639px){.agro-grid{grid-template-columns:1fr 1fr;gap:8px}}
+.agro-card{background:white;border:1px solid #e8dfcf;border-radius:3px;padding:14px 16px}
+.agro-lbl{font-family:'DM Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+.agro-val{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;color:var(--soil);line-height:1}
+.agro-unit{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);margin-top:3px}
+.agro-bar{height:4px;background:#e8dfcf;border-radius:2px;margin-top:8px;overflow:hidden}
+.agro-fill{height:100%;border-radius:2px}
+.af-g{background:var(--green)}.af-r{background:var(--rain)}.af-d{background:var(--danger)}.af-w{background:var(--wheat)}
+.agro-interp{font-size:.7rem;color:var(--muted);margin-top:5px}
+.tabs{display:flex;border-bottom:2px solid #e8dfcf;margin-bottom:14px}
+.tab-btn{font-family:'DM Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;padding:9px 16px;background:none;border:none;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab-btn.active{color:var(--soil);border-bottom-color:var(--wheat)}
+@media(max-width:639px){.tab-btn{padding:9px 10px;font-size:.62rem}}
+.tabp{display:none}.tabp.active{display:block}
+.hourly-wrap{overflow-x:auto}
+.hourly-inner{display:flex;min-width:700px;height:110px;background:white;border:1px solid #e8dfcf;border-radius:3px;padding:10px 6px 6px;align-items:flex-end}
+.hcol{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+.hbar-wrap{flex:1;display:flex;align-items:flex-end;width:100%;justify-content:center}
+.hbar{width:65%;background:#7ab8d9;border-radius:2px 2px 0 0;opacity:.7;min-height:2px}
+.htime{font-family:'DM Mono',monospace;font-size:.5rem;color:var(--muted);margin-top:3px}
+.htemp{font-family:'DM Mono',monospace;font-size:.56rem;font-weight:500;color:var(--soil);position:absolute;top:-14px;left:50%;transform:translateX(-50%);white-space:nowrap}
+.rain-wrap{display:flex;align-items:flex-end;gap:5px;height:70px;background:white;border:1px solid #e8dfcf;border-radius:3px;padding:8px 10px 6px}
+.rcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.rval{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--rain)}
+.rbar{width:100%;background:var(--rain);border-radius:2px 2px 0 0;opacity:.72;min-height:2px}
+.rday{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted)}
+footer{text-align:center;font-family:'DM Mono',monospace;font-size:.6rem;color:#bbb;padding:18px;border-top:1px solid #e8dfcf;margin-top:10px}
 </style>
 </head>
 <body>
-
 <header>
-  <div>
-    <div class="logo">🌾 Météo <span>Agriculteur</span></div>
-    <div class="subtitle">Tableau de bord météo parcelle</div>
+  <div class="hdr-top">
+    <div class="logo">🌾 Météo <b>Agriculteur</b></div>
+    <div class="loc-badge" id="loc-badge">📍 Courgains</div>
   </div>
-  <div class="search-wrap">
+  <div class="search-row">
     <div class="search-inner">
-      <input type="text" id="search-input" placeholder="Commune, code postal…" autocomplete="off" spellcheck="false">
-      <span class="search-icon">🔍</span>
-      <div id="search-results"></div>
+      <input type="text" id="q" placeholder="Commune, code postal…" autocomplete="off" spellcheck="false">
+      <span class="srch-ico">🔍</span>
+      <div id="sr"></div>
     </div>
-    <button id="btn-gps" onclick="useGPS()" title="Utiliser ma position GPS">📡</button>
+    <button id="btn-gps" onclick="gps()">📡</button>
   </div>
-  <div class="location-badge" id="location-badge-text">📍 Courgains — Sarthe</div>
 </header>
-
 <main>
-  <div id="loading"><div class="spinner"></div>Chargement des données météo et du sol…</div>
-
-  <div id="content" style="display:none">
-
-    <div id="alerts-container"></div>
-
-    <!-- CURRENT -->
-    <div id="current-banner" class="fade-in">
-      <div class="current-temp" id="cur-temp">--<sup>°</sup></div>
-      <div class="current-desc">
-        <div class="date-now" id="cur-date"></div>
-        <div class="weather-label" id="cur-label">--</div>
-        <div id="mobile-location" style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#e8c96a;margin-bottom:4px;display:none"></div>
-        <div class="current-meta" id="cur-meta"></div>
+  <div id="loading"><div class="spinner"></div>Chargement des données météo…</div>
+  <div id="content">
+    <div id="alerts"></div>
+    <div id="banner">
+      <div class="cur-temp" id="cur-temp">--<sup>°</sup></div>
+      <div class="cur-info">
+        <div class="cur-date" id="cur-date"></div>
+        <div class="cur-loc" id="cur-loc"></div>
+        <div class="cur-label" id="cur-label">--</div>
+        <div class="cur-stats" id="cur-stats"></div>
       </div>
     </div>
-
-    <!-- CONSEILS DU JOUR -->
-    <div id="conseil-box">
-      <div class="conseil-title">🌱 Conseils parcelle du jour</div>
-      <ul class="conseil-list" id="conseil-list"></ul>
-    </div>
-
-    <!-- ==============================
-         MODULE FENÊTRE SEMIS MAÏS
-    =============================== -->
-    <div id="semis-module">
-      <div class="semis-header">
-        <div class="semis-header-title">
-          🌽 Fenêtre Semis Maïs
-          <small>Analyse en temps réel — seuil 10°C à 10 cm · 5 jours consécutifs</small>
-        </div>
-        <!-- Feu tricolore -->
-        <div class="semis-feu">
-          <div class="feu-light-wrap">
-            <div class="feu-light rouge" id="feu-rouge"></div>
-            <div class="feu-light orange" id="feu-orange"></div>
-            <div class="feu-light vert" id="feu-vert"></div>
-          </div>
-        </div>
-        <div class="semis-verdict">
-          <div class="verdict-title" id="verdict-title">Analyse…</div>
-          <div class="verdict-detail" id="verdict-detail"></div>
-        </div>
+    <div id="conseil"><div class="c-title">🌱 Conseils parcelle du jour</div><ul id="conseil-list"></ul></div>
+    <div class="stitle">🌽 Fenêtre Semis Maïs</div>
+    <div id="semis">
+      <div class="semis-hdr">
+        <div class="semis-htitle">Analyse en temps réel<small>Seuil 10°C sol à 6cm · 5 jours consécutifs</small></div>
+        <div class="feu-wrap"><div class="fl r" id="fr"></div><div class="fl o" id="fo"></div><div class="fl g" id="fg"></div></div>
+        <div class="semis-verdict"><div class="vt r" id="vt">Analyse…</div><div class="vd" id="vd"></div></div>
       </div>
-
-      <!-- CRITÈRES -->
-      <div class="semis-criteres" id="semis-criteres"></div>
-
-      <!-- DATE CIBLE -->
+      <div class="semis-crit" id="semis-crit"></div>
       <div class="semis-target" id="semis-target"></div>
-
-      <!-- GRAPHIQUE SOL -->
-      <div class="semis-graph-section">
-        <div class="semis-graph-title">
-          Température du sol à 6 cm — passé (7j) + prévision (7j)
-          <div class="graph-legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#8b6914"></div>T° sol 6cm</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#e8b84b;opacity:0.6"></div>T° sol 6cm (prévision)</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#e74c3c;border-top: 2px dashed #e74c3c;height:0"></div>Seuil 10°C</div>
-          </div>
-        </div>
-        <div class="soil-chart-wrap" id="soil-chart-wrap">
-          <svg id="soil-svg" viewBox="0 0 800 140" preserveAspectRatio="none"></svg>
-        </div>
-        <div class="semis-graph-sub" id="soil-graph-sub"></div>
+      <div class="semis-graph">
+        <div class="graph-title">Température sol 6cm — 7j passés + 7j prévision</div>
+        <div class="graph-wrap" id="soil-wrap"></div>
+        <div class="graph-sub" id="soil-sub">Chargement…</div>
       </div>
-
-      <!-- CONSEILS SEMIS -->
-      <div class="semis-conseils" id="semis-conseils-list"></div>
+      <div class="semis-tips" id="semis-tips"></div>
     </div>
-
-    <!-- PREVISIONS 7 JOURS -->
-    <div class="section-title">📅 Prévisions fiables — 7 jours</div>
-    <div id="forecast-grid"></div>
-
-    <!-- CONFIDENCE RULER -->
-    <div class="conf-label-row">
-      <span>← Fiable (J+1)</span><span>J+7 / J+8</span><span>Tendances (J+16) →</span>
+    <div class="stitle">📅 Prévisions — 7 jours</div>
+    <div id="forecast"></div>
+    <div class="conf-labels"><span>← Fiable J+1</span><span>J+7 / J+8</span><span>Tendances J+16 →</span></div>
+    <div class="conf-bar"><div class="cb-h"></div><div class="cb-m"></div><div class="cb-l"></div><div class="cb-v"></div></div>
+    <div class="tend-hdr">
+      <span class="tend-badge">⚠ Tendances J+8→J+16</span>
+      <span class="tend-disc">Ordre de grandeur uniquement — ne pas baser un traitement sur ces données.</span>
+      <div class="fiab"><div class="fd on"></div><div class="fd on"></div><div class="fd off"></div><div class="fd off"></div><div class="fd off"></div><span class="fiab-txt">2/5</span></div>
     </div>
-    <div class="confidence-ruler">
-      <div class="conf-seg high"></div><div class="conf-seg medium"></div><div class="conf-seg low"></div><div class="conf-seg vlow"></div>
+    <div id="tendances"></div>
+    <div class="mod">
+      <div class="mod-hdr" style="background:linear-gradient(135deg,#1e2d1a,#2d4025)">
+        <div class="mod-hdr-title" style="color:#a8d890">🍂 Risque Maladies Céréales<small style="color:#7aaa60">Calculé T°, humidité, précipitations · Blé &amp; Orge</small></div>
+      </div>
+      <div class="mal-grid" id="mal-grid"></div>
     </div>
-
-    <!-- TENDANCES -->
-    <div class="tendances-header">
-      <span class="tendances-badge">⚠ Tendances J+8 → J+16</span>
-      <span class="tendances-disclaimer">Ordre de grandeur uniquement — tendance sèche/humide et fourchette de températures.</span>
-      <div class="fiab-wrap">
-        <div class="fiab-dot on"></div><div class="fiab-dot on"></div><div class="fiab-dot off"></div><div class="fiab-dot off"></div><div class="fiab-dot off"></div>
-        <span class="fiab-label">Fiabilité 2/5</span>
+    <div class="mod">
+      <div class="mod-hdr" style="background:linear-gradient(135deg,#1a2535,#253545)">
+        <div class="mod-hdr-title" style="color:#90c8e8">🚜 Planning Traitement Phyto — 48h<small style="color:#6aaac8">Créneaux heure par heure · Vent · Pluie · Température</small></div>
+      </div>
+      <div class="trt-now" id="trt-now"></div>
+      <div class="trt-scroll"><div class="trt-line" id="trt-line"></div></div>
+      <div class="trt-legend">
+        <div class="tleg"><div class="tleg-dot" style="background:#d4f0da;border:1px solid #7ac87a"></div>Favorable</div>
+        <div class="tleg"><div class="tleg-dot" style="background:#fff0cc;border:1px solid #f5a623"></div>Limite</div>
+        <div class="tleg"><div class="tleg-dot" style="background:#fde8e8;border:1px solid #e74c3c"></div>Ne pas traiter</div>
+        <div class="tleg"><div class="tleg-dot" style="background:#f0ede6;border:1px solid #d8cfbf"></div>Passé</div>
       </div>
     </div>
-    <div id="tendances-grid"></div>
-
-    <!-- ONGLETS -->
+    <div class="mod">
+      <div class="mod-hdr" style="background:linear-gradient(135deg,#1a2535,#1e3040)">
+        <div class="mod-hdr-title" style="color:#90c8e8">🌧 Bilan Hydrique vs Normales<small style="color:#6aaac8">Cumul 7j vs normale climatologique 1991–2020</small></div>
+      </div>
+      <div class="pluie-stats" id="pluie-stats"></div>
+      <div class="pluie-graph" id="pluie-graph"></div>
+      <div class="pluie-note">Barres bleues = pluie réelle · Pointillé = normale journalière</div>
+    </div>
+    <div class="mod">
+      <div class="mod-hdr" style="background:linear-gradient(135deg,#1a2a10,#243515)">
+        <div class="mod-hdr-title" style="color:#c8e890">🌡 Degrés-Jours de Croissance (DJC)<small style="color:#9ac860">Cumul thermique depuis date de semis · Stade végétatif</small></div>
+      </div>
+      <div class="djc-top">
+        <span class="djc-lbl">Date de semis :</span>
+        <input type="date" id="djc-date">
+        <button class="djc-btn" onclick="recalcDJC()">Recalculer</button>
+        <span id="djc-hint"></span>
+      </div>
+      <div class="djc-cards" id="djc-cards"></div>
+      <div class="djc-graph" id="djc-graph"></div>
+      <div class="djc-note">Base 10°C maïs · Base 0°C céréales/colza</div>
+    </div>
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('agro',event)">Indicateurs agro</button>
-      <button class="tab-btn" onclick="switchTab('hourly',event)">Heure par heure</button>
-      <button class="tab-btn" onclick="switchTab('rain',event)">Cumuls pluie</button>
+      <button class="tab-btn active" onclick="switchTab('agro',this)">Indicateurs agro</button>
+      <button class="tab-btn" onclick="switchTab('hourly',this)">Heure par heure</button>
+      <button class="tab-btn" onclick="switchTab('rain',this)">Cumuls pluie</button>
     </div>
-    <div id="tab-agro" class="tab-panel active"><div id="agro-grid"></div></div>
-    <div id="tab-hourly" class="tab-panel"><div class="hourly-scroll"><div class="hourly-chart" id="hourly-chart"></div></div></div>
-    <div id="tab-rain" class="tab-panel"><div class="rain-bars" id="rain-bars"></div></div>
-
-    <!-- ==============================
-         MODULE MALADIES CÉRÉALES
-    =============================== -->
-    <div id="maladies-module">
-      <div class="module-header">
-        <div class="module-header-title">
-          🍂 Risque Maladies Céréales
-          <small>Calculé à partir de T°, humidité et précipitations · Blé &amp; orge</small>
-        </div>
-      </div>
-      <div class="maladies-grid" id="maladies-grid"></div>
-    </div>
-
-    <!-- ==============================
-         MODULE PLANNING TRAITEMENT 48H
-    =============================== -->
-    <div id="traitement-module">
-      <div class="module-header module-header-alt">
-        <div class="module-header-title">
-          🚜 Planning Traitement Phyto — 48h
-          <small>Créneaux heure par heure · Vent · Pluie · T° · Humidité</small>
-        </div>
-      </div>
-      <div style="padding:10px 16px 4px">
-        <div class="traitement-criteres" id="traitement-criteres-now"></div>
-      </div>
-      <div class="traitement-scroll">
-        <div class="traitement-timeline" id="traitement-timeline"></div>
-      </div>
-      <div class="traitement-legend">
-        <div class="tleg-item"><div class="tleg-dot" style="background:#d4f0da;border:1px solid #7ac87a"></div>Créneau favorable</div>
-        <div class="tleg-item"><div class="tleg-dot" style="background:#fff0cc;border:1px solid #f5a623"></div>Conditions limites</div>
-        <div class="tleg-item"><div class="tleg-dot" style="background:#fde8e8;border:1px solid #e74c3c"></div>Ne pas traiter</div>
-        <div class="tleg-item"><div class="tleg-dot" style="background:#f0ede6;border:1px solid #d8cfbf"></div>Heure passée</div>
-      </div>
-    </div>
-
-    <!-- ==============================
-         MODULE CUMUL PLUIE VS NORMALES
-    =============================== -->
-    <div id="pluie-module">
-      <div class="module-header" style="background:linear-gradient(135deg,#1a2535,#1e3040)">
-        <div class="module-header-title" style="color:#90c8e8">
-          🌧 Bilan Hydrique vs Normales
-          <small style="color:#6aaac8">Cumul réel 30 jours vs moyenne climatologique · ERA5-Land</small>
-        </div>
-      </div>
-      <div class="pluie-content">
-        <div class="pluie-bilan" id="pluie-bilan"></div>
-        <div class="pluie-chart-wrap"><svg id="pluie-svg" style="width:100%;height:100%"></svg></div>
-        <div class="pluie-chart-sub">Cumul mensuel réel (bleu) vs normale climatologique 1991–2020 (pointillé)</div>
-      </div>
-    </div>
-
-    <!-- ==============================
-         MODULE DEGRÉS-JOURS DE CROISSANCE
-    =============================== -->
-    <div id="djc-module">
-      <div class="module-header" style="background:linear-gradient(135deg,#1a2a10,#243515)">
-        <div class="module-header-title" style="color:#c8e890">
-          🌡 Degrés-Jours de Croissance (DJC)
-          <small style="color:#9ac860">Cumul thermique depuis date de semis · Stade végétatif estimé</small>
-        </div>
-      </div>
-      <div class="djc-content">
-        <div class="djc-date-input-wrap">
-          <span class="djc-label">Date de semis maïs :</span>
-          <input type="date" id="djc-semis-date" class="djc-input">
-          <button class="djc-btn" onclick="recalcDJC()">Recalculer</button>
-          <span class="djc-label" id="djc-semis-hint" style="color:var(--maize-dark)"></span>
-        </div>
-        <div class="djc-cultures" id="djc-cultures"></div>
-        <div class="djc-chart-wrap"><svg id="djc-svg" style="width:100%;height:100%"></svg></div>
-        <div class="djc-note">Base 6°C céréales · Base 10°C maïs · Accumulation depuis date de semis saisie</div>
-      </div>
-    </div>
-
+    <div class="tabp active" id="tab-agro"><div class="agro-grid" id="agro-grid"></div></div>
+    <div class="tabp" id="tab-hourly"><div class="hourly-wrap"><div class="hourly-inner" id="hourly"></div></div></div>
+    <div class="tabp" id="tab-rain"><div class="rain-wrap" id="rain-bars"></div></div>
   </div>
 </main>
-
-<footer>Données météo : Open-Meteo (ECMWF) · Température sol : modèle ERA5-Land · 48.30°N 0.27°E · Actualisé automatiquement</footer>
-
+<footer>Données : Open-Meteo (ECMWF) · Sol : ERA5-Land · Actualisé automatiquement</footer>
 <script>
-let LAT = 48.30, LON = 0.27, LOCATION_NAME = 'Courgains — Sarthe (72)';
-const SEUIL_SOL = 10; // °C
-const DAYS_CONSEC = 5; // jours consécutifs requis
+var LAT=48.30,LON=0.27,LOC='Courgains — Sarthe';
+var SEUIL=10,CONSEC=5;
+var _fcast=null;
+var WMO={0:['☀️','Dégagé'],1:['🌤️','Peu nuageux'],2:['⛅','Nuageux'],3:['☁️','Couvert'],45:['🌫️','Brouillard'],48:['🌫️','Brouillard givrant'],51:['🌦️','Bruine légère'],53:['🌦️','Bruine'],55:['🌧️','Bruine dense'],61:['🌧️','Pluie légère'],63:['🌧️','Pluie'],65:['🌧️','Pluie forte'],71:['❄️','Neige légère'],73:['❄️','Neige'],75:['❄️','Neige forte'],80:['🌦️','Averses'],81:['🌧️','Averses mod.'],82:['⛈️','Averses fortes'],95:['⛈️','Orage'],96:['⛈️','Orage+grêle'],99:['⛈️','Orage violent']};
+var DAYS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+var MO=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+var MOL=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+var NORM=[65,52,56,50,62,57,52,51,59,74,72,70];
+function g(id){return document.getElementById(id);}
+function wmo(c){return WMO[c]||['🌡️','Variable'];}
+function wdir(d){return ['N','NE','E','SE','S','SO','O','NO'][Math.round(d/45)%8];}
+function fmtL(s){var d=new Date(s);return ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][d.getDay()]+' '+d.getDate()+' '+MO[d.getMonth()]+' '+d.getFullYear();}
+function svgIn(el,s){if(el)el.innerHTML=s;}
 
-const WMO = { 0:['☀️','Dégagé'],1:['🌤️','Peu nuageux'],2:['⛅','Nuageux'],3:['☁️','Couvert'],45:['🌫️','Brouillard'],48:['🌫️','Brouillard givrant'],51:['🌦️','Bruine légère'],53:['🌦️','Bruine'],55:['🌧️','Bruine dense'],61:['🌧️','Pluie légère'],63:['🌧️','Pluie'],65:['🌧️','Pluie forte'],71:['❄️','Neige légère'],73:['❄️','Neige'],75:['❄️','Neige forte'],80:['🌦️','Averses'],81:['🌧️','Averses mod.'],82:['⛈️','Averses fortes'],95:['⛈️','Orage'],96:['⛈️','Orage+grêle'],99:['⛈️','Orage violent'] };
-const wmo = c => WMO[c] || ['🌡️','Variable'];
-const DAYS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-const MONTHS = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
-const MONTHS_LONG = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-
-function fmtLong(s) {
-  const d = new Date(s);
-  return ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
-}
-function wdir(deg) { return ['N','NE','E','SE','S','SO','O','NO'][Math.round(deg/45)%8]; }
-
-// --- Compute daily average soil temp from hourly ---
-function dailySoilAvg(hourlyTimes, hourlyTemps, dateStr) {
-  const vals = [];
-  for (let i = 0; i < hourlyTimes.length; i++) {
-    if (hourlyTimes[i].startsWith(dateStr)) vals.push(hourlyTemps[i]);
-  }
-  if (!vals.length) return null;
-  return vals.reduce((a,b) => a+b, 0) / vals.length;
+function soilAvg(times,vals,ds){
+  var sum=0,n=0;
+  for(var i=0;i<times.length;i++){if(times[i].startsWith(ds)&&vals[i]!==null){sum+=vals[i];n++;}}
+  return n?sum/n:null;
 }
 
-// --- Find first date when 5 consecutive days have avg > 10°C ---
-function findSemisDate(allDates, allAvgSoil) {
-  let streak = 0;
-  for (let i = 0; i < allAvgSoil.length; i++) {
-    if (allAvgSoil[i] !== null && allAvgSoil[i] >= SEUIL_SOL) {
-      streak++;
-      if (streak >= DAYS_CONSEC) {
-        return allDates[i - DAYS_CONSEC + 1];
-      }
-    } else {
-      streak = 0;
-    }
+function findSemisDate(dates,avgs){
+  var streak=0;
+  for(var i=0;i<avgs.length;i++){
+    if(avgs[i]!==null&&avgs[i]>=SEUIL){streak++;if(streak>=CONSEC)return dates[i-CONSEC+1];}
+    else streak=0;
   }
   return null;
 }
 
-function conseils(daily, cw) {
-  const out = [];
-  const [r0,r1] = daily.precipitation_sum;
-  const pr0 = daily.precipitation_probability_max[0];
-  const etp0 = daily.et0_fao_evapotranspiration[0];
-  const wnd = daily.wind_speed_10m_max[0];
-  const tmax = daily.temperature_2m_max[0];
-  const tmin = daily.temperature_2m_min[0];
-  const wc = daily.weathercode[0];
-  if (tmin <= 0) out.push(`⚠️ Risque de gel cette nuit (${tmin}°C) — protéger les cultures sensibles`);
-  if (pr0 < 30 && wnd < 20) out.push(`✅ Bonnes conditions pour les traitements phyto — vent < 20 km/h, pluie < 30%`);
-  else if (pr0 >= 60 || r0 > 2) out.push(`🚫 Éviter les traitements phyto — risque pluie ${pr0}% / ${r0} mm prévu`);
-  else if (wnd >= 20) out.push(`⚠️ Vent soutenu (${wnd} km/h) — report des traitements conseillé`);
-  if (etp0 > 3.5) out.push(`💧 ETP élevée (${etp0.toFixed(1)} mm) — surveiller le bilan hydrique`);
-  if (pr0 < 20 && tmax > 18 && [0,1,2].includes(wc)) out.push(`🌾 Journée favorable : travaux des sols, récolte, semis`);
-  if (r1 > 5 && r0 < 1) out.push(`🌧️ Pluie utile attendue demain (${r1} mm)`);
-  if (r0 > 5 || r1 > 5) out.push(`🐄 Reporter les épandages organiques — risque de lessivage`);
-  if ([45,48].includes(wc)) out.push(`🌫️ Brouillard — vigilance pour les engins agricoles`);
-  if (tmax > 30) out.push(`🔥 Forte chaleur (${tmax}°C) — surveiller l'abreuvement des animaux`);
-  if (!out.length) out.push('🌤️ Conditions normales — journée sans contrainte météo particulière');
+function conseils(daily,cw){
+  var out=[];
+  var r0=daily.precipitation_sum[0],r1=daily.precipitation_sum[1]||0;
+  var pr0=daily.precipitation_probability_max[0];
+  var etp0=daily.et0_fao_evapotranspiration[0];
+  var wnd=daily.wind_speed_10m_max[0];
+  var tmax=daily.temperature_2m_max[0];
+  var tmin=daily.temperature_2m_min[0];
+  var wc=daily.weathercode[0];
+  if(tmin<=0)out.push('⚠️ Risque de gel cette nuit ('+tmin+'°C) — protéger les cultures sensibles');
+  if(pr0<30&&wnd<20)out.push('✅ Bonnes conditions pour les traitements phyto — vent < 20 km/h, pluie < 30%');
+  else if(pr0>=60||r0>2)out.push('🚫 Éviter les traitements phyto — risque pluie '+pr0+'% / '+r0+' mm prévu');
+  else if(wnd>=20)out.push('⚠️ Vent soutenu ('+wnd+' km/h) — report des traitements conseillé');
+  if(etp0>3.5)out.push('💧 ETP élevée ('+etp0.toFixed(1)+' mm) — surveiller le bilan hydrique');
+  if(pr0<20&&tmax>18&&[0,1,2].indexOf(wc)>=0)out.push('🌾 Journée favorable : travaux des sols, récolte, semis');
+  if(r1>5&&r0<1)out.push('🌧️ Pluie utile attendue demain ('+r1+' mm)');
+  if(r0>5||r1>5)out.push('🐄 Reporter les épandages organiques — risque de lessivage');
+  if(wc===45||wc===48)out.push('🌫️ Brouillard — vigilance pour les engins agricoles');
+  if(tmax>30)out.push('🔥 Forte chaleur ('+tmax+'°C) — surveiller l\'abreuvement des animaux');
+  if(!out.length)out.push('🌤️ Conditions normales — journée sans contrainte météo particulière');
   return out;
 }
 
-async function fetchAndRender() {
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('content').style.display = 'none';
-  document.getElementById('loading').innerHTML = '<div class="spinner"></div>Chargement des données météo…';
-
-  try {
-    const today = new Date();
-    const todayStr = today.toISOString().slice(0,10);
-    const past7 = new Date(today); past7.setDate(today.getDate() - 7);
-    const past7str = past7.toISOString().slice(0,10);
-
-    const urlForecast = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`
-      + `&hourly=temperature_2m,precipitation,wind_speed_10m,weathercode,soil_temperature_6cm,relative_humidity_2m`
-      + `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,et0_fao_evapotranspiration,weathercode,precipitation_probability_max`
-      + `&current_weather=true&forecast_days=16&timezone=Europe%2FParis`;
-
-    const urlHistory = `https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}`
-      + `&hourly=soil_temperature_6cm`
-      + `&start_date=${past7str}&end_date=${todayStr}`
-      + `&timezone=Europe%2FParis`;
-
-    // ÉTAPE 1 — Forecast seul affiché immédiatement
-    const forecastData = await fetch(urlForecast).then(r => r.json());
-
-    document.getElementById('location-badge-text').textContent = '📍 ' + LOCATION_NAME;
-    const mob = document.getElementById('mobile-location');
-    mob.textContent = '📍 ' + LOCATION_NAME;
-    mob.style.display = window.innerWidth <= 640 ? 'block' : 'none';
-
-    const emptyHist = { hourly: { time: [], soil_temperature_6cm: [] } };
-    render(forecastData, emptyHist);
-
-    // ÉTAPE 2 — Historique sol en arrière-plan
-    fetch(urlHistory)
-      .then(r => r.json())
-      .then(histData => { updateSoilModules(forecastData, histData); })
-      .catch(() => {});
-
-  } catch(e) {
-    console.error(e);
-    document.getElementById('loading').innerHTML =
-      '<p style="color:var(--danger)">❌ Impossible de charger les données météo.<br><small>Vérifiez votre connexion internet.</small></p>';
-  }
+function renderBanner(data){
+  var cw=data.current_weather,daily=data.daily;
+  g('cur-temp').innerHTML=Math.round(cw.temperature)+'<sup>°</sup>';
+  g('cur-date').textContent=fmtL(daily.time[0]);
+  g('cur-loc').textContent='📍 '+LOC;
+  g('cur-label').textContent=wmo(cw.weathercode)[1]+' '+wmo(cw.weathercode)[0];
+  g('loc-badge').textContent='📍 '+LOC;
+  g('cur-stats').innerHTML='<div class="cs">🌡 Min/Max<strong>'+Math.round(daily.temperature_2m_min[0])+'° / '+Math.round(daily.temperature_2m_max[0])+'°</strong></div>'
+    +'<div class="cs">💨 Vent<strong>'+Math.round(cw.windspeed)+' km/h '+wdir(cw.winddirection)+'</strong></div>'
+    +'<div class="cs">🌧 Pluie J<strong>'+daily.precipitation_sum[0]+' mm</strong></div>'
+    +'<div class="cs">🌱 ETP J<strong>'+daily.et0_fao_evapotranspiration[0].toFixed(1)+' mm</strong></div>';
 }
 
-// Mise à jour différée des modules qui nécessitent l'historique
-function updateSoilModules(forecastData, histData) {
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0,10);
-  const daily = forecastData.daily;
-  const hourly = forecastData.hourly;
+function renderAlerts(daily){
+  var html='';
+  if(daily.temperature_2m_min[0]<=0)html+='<div class="alert danger">❄️ ALERTE GEL — Tmin prévue : '+daily.temperature_2m_min[0]+'°C</div>';
+  if(daily.wind_speed_10m_max[0]>=50)html+='<div class="alert danger">💨 ALERTE VENT — Rafales jusqu\'à '+daily.wind_speed_10m_max[0]+' km/h</div>';
+  if(daily.precipitation_sum[0]>=20)html+='<div class="alert danger">🌊 ALERTE PLUIE INTENSE — '+daily.precipitation_sum[0]+' mm aujourd\'hui</div>';
+  if(daily.weathercode[0]>=95)html+='<div class="alert danger">⛈️ ALERTE ORAGE</div>';
+  g('alerts').innerHTML=html;
+}
 
-  // Recalcul soil temp avec vraies données historiques
-  const pastDates = [], pastAvgs = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today); d.setDate(today.getDate() - i);
-    const ds = d.toISOString().slice(0,10);
-    pastDates.push(ds);
-    const avg = dailySoilAvg(histData.hourly.time, histData.hourly.soil_temperature_6cm, ds);
-    pastAvgs.push(avg !== null ? parseFloat(avg.toFixed(1)) : null);
+function renderConseils(daily,cw){
+  g('conseil-list').innerHTML=conseils(daily,cw).map(function(c){return '<li>'+c+'</li>';}).join('');
+}
+
+function renderForecast(daily){
+  g('forecast').innerHTML=daily.time.slice(0,7).map(function(d,i){
+    var rain=daily.precipitation_sum[i],prob=daily.precipitation_probability_max[i];
+    var ico=wmo(daily.weathercode[i])[0];
+    var cls=i===0?'today':(rain>3||prob>60)?'wet':(prob<20&&daily.temperature_2m_max[i]>12)?'dry':'';
+    return '<div class="dc '+cls+'">'
+      +'<div class="dc-day">'+(i===0?'Auj.':DAYS[new Date(d).getDay()])+' '+new Date(d).getDate()+'</div>'
+      +'<div class="dc-ico">'+ico+'</div>'
+      +'<div class="dc-temps"><span class="tmax">'+Math.round(daily.temperature_2m_max[i])+'°</span><span class="tmin">'+Math.round(daily.temperature_2m_min[i])+'°</span></div>'
+      +'<div class="dc-rain'+(rain<1?' ok':'')+'">'+( rain<0.1?'— sec':'💧 '+rain+' mm')+(prob>10?'<br>('+prob+'%)':'')+'</div>'
+      +'<div class="dc-etp">ETP '+daily.et0_fao_evapotranspiration[i].toFixed(1)+' mm</div>'
+      +'</div>';
+  }).join('');
+}
+
+function renderTendances(daily){
+  var len=Math.min(daily.time.length-7,9);
+  var html='';
+  for(var i=0;i<len;i++){
+    var idx=i+7;
+    var rain=daily.precipitation_sum[idx],prob=daily.precipitation_probability_max[idx];
+    var ico=wmo(daily.weathercode[idx])[0];
+    var cls=(rain>3||prob>55)?'wet':(prob<25&&rain<1)?'dry':'';
+    var dd=new Date(daily.time[idx]);
+    html+='<div class="tc '+cls+'">'
+      +'<div class="tc-day">'+DAYS[dd.getDay()]+' '+dd.getDate()+'</div>'
+      +'<div class="tc-ico">'+ico+'</div>'
+      +'<div class="tc-temps"><span class="tc-tmax">'+Math.round(daily.temperature_2m_max[idx])+'°</span><span class="tc-tmin">'+Math.round(daily.temperature_2m_min[idx])+'°</span></div>'
+      +'<div class="tc-rain'+(rain<1?' dry':'')+'">'+( rain<0.1?'— sec':'~'+rain+' mm')+(prob>10?' ('+prob+'%)':'')+'</div>'
+      +'</div>';
   }
-  const fcastDates = [], fcastAvgs = [];
-  for (let i = 0; i < 7; i++) {
-    const ds = daily.time[i];
-    const avg = dailySoilAvg(hourly.time, hourly.soil_temperature_6cm, ds);
-    fcastDates.push(ds);
-    fcastAvgs.push(avg !== null ? parseFloat(avg.toFixed(1)) : null);
-  }
+  g('tendances').innerHTML=html;
+}
 
-  renderSoilChart(pastDates, pastAvgs, fcastDates, fcastAvgs);
-
-  const recent5 = pastAvgs.slice(-5).filter(v => v !== null);
-  const avg5 = recent5.length ? recent5.reduce((a,b)=>a+b,0) / recent5.length : null;
-  const nowH = new Date().getHours();
-  const si = hourly.time.findIndex(t => t.startsWith(todayStr) && parseInt(t.slice(11,13)) >= nowH);
-  const currentSoilTemp = si >= 0 ? hourly.soil_temperature_6cm[si] : fcastAvgs[0];
-  document.getElementById('soil-graph-sub').textContent =
-    `Moy. 5j : ${avg5 !== null ? avg5.toFixed(1) : '--'}°C · Valeur actuelle : ${currentSoilTemp !== null ? currentSoilTemp.toFixed(1) : '--'}°C · Source : Open-Meteo ERA5-Land`;
-
-  // Mise à jour feu tricolore sol
-  const solOk = avg5 !== null && avg5 >= SEUIL_SOL;
-  const rain3j = daily.precipitation_sum.slice(0,3).reduce((a,b)=>a+b,0);
-  const gelRisk = daily.temperature_2m_min.slice(0,10).some(t => t <= 0);
-  const minGel = Math.min(...daily.temperature_2m_min.slice(0,10));
-  const portanceOk = rain3j < 20;
-
-  let feuColor, verdictTitle, verdictDetail;
-  if (gelRisk) {
-    feuColor='rouge'; verdictTitle='Ne pas semer — Gel prévu';
-    verdictDetail=`Gel attendu (Tmin ${minGel}°C) · Attendre la fin du risque gel`;
-  } else if (!solOk) {
-    feuColor='rouge'; verdictTitle='Sol trop froid — Attendre';
-    verdictDetail=`Moy. 5j sol : ${avg5!==null?avg5.toFixed(1):'?'}°C · Seuil 10°C non atteint`;
-  } else if (!portanceOk) {
-    feuColor='orange'; verdictTitle='Sol chaud mais terrain détrempé';
-    verdictDetail=`T° sol OK (${avg5.toFixed(1)}°C) · ${rain3j.toFixed(0)}mm/3j — attendre ressuyage`;
-  } else {
-    feuColor='vert'; verdictTitle='Conditions favorables — Vous pouvez semer';
-    verdictDetail=`T° sol ≥ 10°C · Portance correcte · Pas de gel prévu`;
-  }
-  document.getElementById('feu-rouge').classList.toggle('on', feuColor==='rouge');
-  document.getElementById('feu-orange').classList.toggle('on', feuColor==='orange');
-  document.getElementById('feu-vert').classList.toggle('on', feuColor==='vert');
-  const vt = document.getElementById('verdict-title');
-  vt.textContent = verdictTitle; vt.className = `verdict-title ${feuColor}`;
-  document.getElementById('verdict-detail').textContent = verdictDetail;
-
-  // Mise à jour critères
-  const criteres = [
-    { icon:'🌡', label:'T° sol 6cm maintenant', value: currentSoilTemp!==null?currentSoilTemp.toFixed(1)+'°C':'--', status: currentSoilTemp>=SEUIL_SOL?'✓ Seuil 10°C atteint':`+${(SEUIL_SOL-currentSoilTemp).toFixed(1)}°C manquants`, cls: currentSoilTemp>=SEUIL_SOL?'ok':'block' },
-    { icon:'📈', label:'Moy. 5 derniers jours', value: avg5!==null?avg5.toFixed(1)+'°C':'--', status: solOk?'✓ ≥ 10°C sur 5j':`Besoin +${avg5!==null?(SEUIL_SOL-avg5).toFixed(1):'?'}°C`, cls: solOk?'ok':'block' },
-    { icon:'❄️', label:'Risque gel 10 jours', value: gelRisk?`${minGel}°C`:'Aucun', status: gelRisk?'⚠ Gel prévu — attendre':'✓ Pas de gel prévu', cls: gelRisk?'block':'ok' },
-    { icon:'🚜', label:'Portance sol (pluie 3j)', value: rain3j.toFixed(0)+' mm', status: portanceOk?'✓ Sol ressuyé acceptable':'⚠ Sol détrempé — attendre', cls: portanceOk?'ok':'warn' },
+function renderAgro(daily){
+  var rain7=daily.precipitation_sum.slice(0,7).reduce(function(a,b){return a+b;},0);
+  var etp7=daily.et0_fao_evapotranspiration.slice(0,7).reduce(function(a,b){return a+b;},0);
+  var bilan=rain7-etp7;
+  var rdays=daily.precipitation_sum.slice(0,7).filter(function(r){return r>=1;}).length;
+  var items=[
+    {lbl:'Cumul pluie 7j',val:rain7.toFixed(0),unit:'mm',bar:Math.min(100,rain7/50*100),bc:rain7>30?'af-r':'af-g',txt:rain7>40?'Semaine très humide':rain7>15?'Semaine correcte':'Semaine sèche'},
+    {lbl:'ETP 7 jours',val:etp7.toFixed(1),unit:'mm évapotranspiration',bar:Math.min(100,etp7/30*100),bc:etp7>20?'af-d':'',txt:etp7>25?'Demande forte':etp7>15?'Demande modérée':'Faible demande'},
+    {lbl:'Bilan hydrique 7j',val:(bilan>=0?'+':'')+bilan.toFixed(0),unit:'mm (Pluie − ETP)',bar:Math.min(100,Math.max(0,(bilan+20)/40*100)),bc:bilan<-10?'af-d':bilan>5?'af-r':'af-g',txt:bilan>5?'Excédent hydrique':bilan<-10?'Déficit — surveiller':'Équilibre satisfaisant'},
+    {lbl:'Journées exploitables',val:7-rdays,unit:'jours sans pluie / 7',bar:(7-rdays)/7*100,bc:(7-rdays)>=5?'af-g':(7-rdays)<=1?'af-d':'af-w',txt:rdays>=5?'Semaine perturbée':rdays<=1?'Semaine sèche':rdays+' j de pluie prévus'},
   ];
-  document.getElementById('semis-criteres').innerHTML = criteres.map(c=>`
-    <div class="critere-card ${c.cls}"><div class="critere-icon">${c.icon}</div><div class="critere-label">${c.label}</div><div class="critere-value">${c.value}</div><div class="critere-status">${c.status}</div></div>`).join('');
-
-  renderDJC(daily, histData);
+  g('agro-grid').innerHTML=items.map(function(a){
+    return '<div class="agro-card">'
+      +'<div class="agro-lbl">'+a.lbl+'</div>'
+      +'<div class="agro-val">'+a.val+'</div>'
+      +'<div class="agro-unit">'+a.unit+'</div>'
+      +'<div class="agro-bar"><div class="agro-fill '+a.bc+'" style="width:'+a.bar+'%"></div></div>'
+      +'<div class="agro-interp">'+a.txt+'</div>'
+      +'</div>';
+  }).join('');
 }
 
-// Geocoding via Open-Meteo geocoding API (free, no key)
-async function searchLocation(query) {
-  const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=fr&countryCode=FR`);
-  const data = await res.json();
-  return data.results || [];
+function renderHourly(hourly,todayStr){
+  var nowH=new Date().getHours();
+  var si=0;
+  for(var i=0;i<hourly.time.length;i++){
+    if(hourly.time[i].startsWith(todayStr)&&parseInt(hourly.time[i].slice(11,13))>=nowH){si=i;break;}
+  }
+  var hs=hourly.time.slice(si,si+24);
+  var ht=hourly.temperature_2m.slice(si,si+24);
+  var hp=hourly.precipitation.slice(si,si+24);
+  var maxP=Math.max.apply(null,hp.concat([0.5]));
+  g('hourly').innerHTML=hs.map(function(t,i){
+    var h=parseInt(t.slice(11,13));
+    return '<div class="hcol">'
+      +'<span class="htemp">'+Math.round(ht[i])+'°</span>'
+      +'<div class="hbar-wrap"><div class="hbar" style="height:'+Math.round(hp[i]/maxP*60)+'px"></div></div>'
+      +'<div class="htime">'+String(h).padStart(2,'0')+'h</div>'
+      +'</div>';
+  }).join('');
 }
 
-function showResults(results) {
-  const list = document.getElementById('search-results');
-  if (!results.length) {
-    list.innerHTML = '<div class="search-result-item" style="color:var(--muted);cursor:default">Aucun résultat trouvé</div>';
-    list.style.display = 'block';
-    return;
-  }
-  list.innerHTML = results.map((r, i) => `
-    <div class="search-result-item" onclick="selectLocation(${i})" data-idx="${i}">
-      📍 <strong>${r.name}</strong> <span style="color:var(--muted);font-size:0.8em">${r.admin2 || ''} ${r.admin1 || ''}</span>
-    </div>
-  `).join('');
-  list.style.display = 'block';
-  window._searchResults = results;
+function renderRain(daily){
+  var maxR=Math.max.apply(null,daily.precipitation_sum.slice(0,7).concat([1]));
+  g('rain-bars').innerHTML=daily.time.slice(0,7).map(function(d,i){
+    var r=daily.precipitation_sum[i];
+    return '<div class="rcol">'
+      +'<div class="rval">'+(r>0.1?r+'mm':'—')+'</div>'
+      +'<div class="rbar" style="height:'+Math.round(r/maxR*50)+'px"></div>'
+      +'<div class="rday">'+DAYS[new Date(d).getDay()]+'</div>'
+      +'</div>';
+  }).join('');
 }
 
-function selectLocation(idx) {
-  const r = window._searchResults[idx];
-  LAT = r.latitude;
-  LON = r.longitude;
-  LOCATION_NAME = r.name + (r.admin2 ? ' — ' + r.admin2 : '') + (r.admin1 ? ' (' + r.admin1 + ')' : '');
-  document.getElementById('search-input').value = r.name;
-  document.getElementById('search-results').style.display = 'none';
-  // Save to localStorage
-  localStorage.setItem('meteo_lat', LAT);
-  localStorage.setItem('meteo_lon', LON);
-  localStorage.setItem('meteo_name', LOCATION_NAME);
-  fetchAndRender();
-}
-
-function useGPS() {
-  const btn = document.getElementById('btn-gps');
-  btn.textContent = '⏳';
-  btn.disabled = true;
-  if (!navigator.geolocation) {
-    alert('Géolocalisation non disponible sur ce navigateur');
-    btn.textContent = '📡';
-    btn.disabled = false;
-    return;
+// ── MALADIES ────────────────────────────────────────────────────
+function renderMaladies(daily){
+  var rain7=daily.precipitation_sum.slice(0,7).reduce(function(a,b){return a+b;},0);
+  var rain3=daily.precipitation_sum.slice(0,3).reduce(function(a,b){return a+b;},0);
+  var tmax7=daily.temperature_2m_max.slice(0,7);
+  var tmin7=daily.temperature_2m_min.slice(0,7);
+  var avgT=(tmax7.reduce(function(a,b){return a+b;},0)+tmin7.reduce(function(a,b){return a+b;},0))/(tmax7.length*2);
+  var avgTmax=tmax7.reduce(function(a,b){return a+b;},0)/tmax7.length;
+  var rainDays=daily.precipitation_sum.slice(0,7).filter(function(r){return r>=1;}).length;
+  var hum=rainDays/7;
+  var month=new Date().getMonth();
+  function lv(s){
+    if(s<0.33)return {label:'Faible',cls:'rf',bc:'mf-f'};
+    if(s<0.66)return {label:'Modéré',cls:'rm',bc:'mf-m'};
+    return {label:'Élevé',cls:'re',bc:'mf-e'};
   }
-  navigator.geolocation.getCurrentPosition(async pos => {
-    LAT = parseFloat(pos.coords.latitude.toFixed(4));
-    LON = parseFloat(pos.coords.longitude.toFixed(4));
-    // Reverse geocode
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${LAT}&lon=${LON}&format=json&accept-language=fr`);
-      const data = await res.json();
-      const town = data.address.village || data.address.town || data.address.city || data.address.municipality || 'Ma position';
-      const dept = data.address.county || data.address.state || '';
-      LOCATION_NAME = town + (dept ? ' — ' + dept : '');
-    } catch(e) {
-      LOCATION_NAME = `Position GPS (${LAT}, ${LON})`;
-    }
-    localStorage.setItem('meteo_lat', LAT);
-    localStorage.setItem('meteo_lon', LON);
-    localStorage.setItem('meteo_name', LOCATION_NAME);
-    document.getElementById('search-input').value = LOCATION_NAME;
-    btn.textContent = '📡';
-    btn.disabled = false;
-    fetchAndRender();
-  }, err => {
-    alert('Impossible d\'obtenir la position GPS. Vérifiez les autorisations de localisation.');
-    btn.textContent = '📡';
-    btn.disabled = false;
-  }, { timeout: 10000 });
-}
-
-async function load() {
-  // Restore saved location
-  const savedLat = localStorage.getItem('meteo_lat');
-  const savedLon = localStorage.getItem('meteo_lon');
-  const savedName = localStorage.getItem('meteo_name');
-  if (savedLat && savedLon && savedName) {
-    LAT = parseFloat(savedLat);
-    LON = parseFloat(savedLon);
-    LOCATION_NAME = savedName;
-    document.getElementById('search-input').value = savedName;
-  }
-  fetchAndRender();
-}
-
-function render(data, histData) {
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('content').style.display = 'block';
-
-  const cw = data.current_weather, daily = data.daily, hourly = data.hourly;
-
-  // CURRENT
-  document.getElementById('cur-temp').innerHTML = `${Math.round(cw.temperature)}<sup>°</sup>`;
-  document.getElementById('cur-date').textContent = fmtLong(daily.time[0]);
-  document.getElementById('cur-label').textContent = wmo(cw.weathercode)[1] + ' ' + wmo(cw.weathercode)[0];
-  document.getElementById('cur-meta').innerHTML = `
-    <div class="stat">🌡 Min/Max<br><strong>${Math.round(daily.temperature_2m_min[0])}° / ${Math.round(daily.temperature_2m_max[0])}°</strong></div>
-    <div class="stat">💨 Vent<br><strong>${Math.round(cw.windspeed)} km/h ${wdir(cw.winddirection)}</strong></div>
-    <div class="stat">🌧 Pluie J<br><strong>${daily.precipitation_sum[0]} mm</strong></div>
-    <div class="stat">🌱 ETP J<br><strong>${daily.et0_fao_evapotranspiration[0].toFixed(1)} mm</strong></div>
-  `;
-
-  // ALERTES
-  const alerts = [];
-  if (daily.temperature_2m_min[0] <= 0) alerts.push({type:'danger', msg:`❄️ ALERTE GEL — Tmin prévue : ${daily.temperature_2m_min[0]}°C`});
-  if (daily.wind_speed_10m_max[0] >= 50) alerts.push({type:'danger', msg:`💨 ALERTE VENT — Rafales jusqu'à ${daily.wind_speed_10m_max[0]} km/h`});
-  if (daily.precipitation_sum[0] >= 20) alerts.push({type:'danger', msg:`🌊 ALERTE PLUIE INTENSE — ${daily.precipitation_sum[0]} mm aujourd'hui`});
-  if (daily.weathercode[0] >= 95) alerts.push({type:'danger', msg:`⛈️ ALERTE ORAGE`});
-  document.getElementById('alerts-container').innerHTML = alerts.map(a=>`<div class="alert-box ${a.type}">${a.msg}</div>`).join('');
-
-  // CONSEILS
-  document.getElementById('conseil-list').innerHTML = conseils(daily, cw).map(c=>`<li>${c}</li>`).join('');
-
-  // ================================================================
-  // MODULE SEMIS MAÏS
-  // ================================================================
-
-  // Build soil temp series: 7 past days (historical) + 7 forecast days
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0,10);
-
-  // Past 7 days daily averages (from history API)
-  const pastDates = [], pastAvgs = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today); d.setDate(today.getDate() - i);
-    const ds = d.toISOString().slice(0,10);
-    pastDates.push(ds);
-    const avg = dailySoilAvg(histData.hourly.time, histData.hourly.soil_temperature_6cm, ds);
-    pastAvgs.push(avg !== null ? parseFloat(avg.toFixed(1)) : null);
-  }
-
-  // Forecast 7 days daily averages
-  const fcastDates = [], fcastAvgs = [];
-  for (let i = 0; i < 7; i++) {
-    const ds = daily.time[i];
-    const avg = dailySoilAvg(hourly.time, hourly.soil_temperature_6cm, ds);
-    fcastDates.push(ds);
-    fcastAvgs.push(avg !== null ? parseFloat(avg.toFixed(1)) : null);
-  }
-
-  // Current soil temp (latest hourly value)
-  const nowH = new Date().getHours();
-  const startIdx = hourly.time.findIndex(t => t.startsWith(todayStr) && parseInt(t.slice(11,13)) >= nowH);
-  const currentSoilTemp = startIdx >= 0 ? hourly.soil_temperature_6cm[startIdx] : fcastAvgs[0];
-
-  // Rolling 5-day average (using last 5 days of past + today)
-  const recent5 = pastAvgs.slice(-5).filter(v => v !== null);
-  const avg5 = recent5.length ? recent5.reduce((a,b)=>a+b,0) / recent5.length : null;
-
-  // Find first semis date in the 14-day window
-  const allDates = [...pastDates.slice(-3), ...fcastDates]; // last 3 past + 7 forecast = 10 days
-  const allAvgs = [...pastAvgs.slice(-3), ...fcastAvgs];
-  const semisDate = findSemisDate(allDates, allAvgs);
-
-  // Frost risk in next 10 days
-  const gelRisk = daily.temperature_2m_min.slice(0,10).some(t => t <= 0);
-  const minForecastGel = Math.min(...daily.temperature_2m_min.slice(0,10));
-
-  // Portance / précipitations
-  const rain3j = daily.precipitation_sum.slice(0,3).reduce((a,b)=>a+b,0);
-  const portanceOk = rain3j < 20;
-
-  // Determine feu tricolore
-  let feuColor, verdictTitle, verdictDetail;
-  const solOk = avg5 !== null && avg5 >= SEUIL_SOL;
-
-  if (gelRisk) {
-    feuColor = 'rouge';
-    verdictTitle = 'Ne pas semer — Gel prévu';
-    verdictDetail = `Gel attendu dans les 10 prochains jours (Tmin ${minForecastGel}°C)\nAttendre la fin du risque gel avant tout semis`;
-  } else if (!solOk) {
-    const manque = avg5 !== null ? (SEUIL_SOL - avg5).toFixed(1) : '?';
-    feuColor = 'rouge';
-    verdictTitle = 'Sol trop froid — Attendre';
-    verdictDetail = `Moy. 5j sol à 6cm : ${avg5 !== null ? avg5.toFixed(1) : '?'}°C (seuil 10°C)\nIl manque encore ${manque}°C en moyenne`;
-  } else if (!portanceOk) {
-    feuColor = 'orange';
-    verdictTitle = 'Sol chaud mais terrain détrempé';
-    verdictDetail = `T° sol favorable (${avg5.toFixed(1)}°C) mais ${rain3j.toFixed(0)} mm sur 3j\nAttendre le ressuyage avant de lancer le tracteur`;
-  } else {
-    feuColor = 'vert';
-    verdictTitle = 'Conditions favorables — Vous pouvez semer';
-    verdictDetail = `T° sol ≥ 10°C depuis ${DAYS_CONSEC}j · Portance correcte · Pas de gel prévu`;
-  }
-
-  // Allumer le bon feu
-  document.getElementById('feu-rouge').classList.toggle('on', feuColor === 'rouge');
-  document.getElementById('feu-orange').classList.toggle('on', feuColor === 'orange');
-  document.getElementById('feu-vert').classList.toggle('on', feuColor === 'vert');
-
-  const vt = document.getElementById('verdict-title');
-  vt.textContent = verdictTitle;
-  vt.className = `verdict-title ${feuColor}`;
-  document.getElementById('verdict-detail').textContent = verdictDetail;
-
-  // CRITÈRES CARDS
-  const criteres = [
-    {
-      icon: '🌡',
-      label: 'T° sol 6cm maintenant',
-      value: currentSoilTemp !== null ? currentSoilTemp.toFixed(1) + '°C' : '--',
-      status: currentSoilTemp >= SEUIL_SOL ? '✓ Seuil 10°C atteint' : `Seuil 10°C : +${(SEUIL_SOL - currentSoilTemp).toFixed(1)}°C manquants`,
-      cls: currentSoilTemp >= SEUIL_SOL ? 'ok' : 'block'
-    },
-    {
-      icon: '📈',
-      label: 'Moy. 5 derniers jours',
-      value: avg5 !== null ? avg5.toFixed(1) + '°C' : '--',
-      status: solOk ? '✓ ≥ 10°C sur 5j' : `Besoin encore ${avg5 !== null ? (SEUIL_SOL - avg5).toFixed(1) : '?'}°C de plus`,
-      cls: solOk ? 'ok' : 'block'
-    },
-    {
-      icon: '❄️',
-      label: 'Risque gel 10 jours',
-      value: gelRisk ? `${minForecastGel}°C` : 'Aucun',
-      status: gelRisk ? `⚠ Gel prévu — attendre` : '✓ Pas de gel prévu',
-      cls: gelRisk ? 'block' : 'ok'
-    },
-    {
-      icon: '🚜',
-      label: 'Portance sol (pluie 3j)',
-      value: rain3j.toFixed(0) + ' mm',
-      status: portanceOk ? '✓ Sol ressuyé acceptable' : '⚠ Sol détrempé — attendre',
-      cls: portanceOk ? 'ok' : 'warn'
-    },
+  var items=[
+    {name:'Septoriose',ico:'🍃',
+     score:Math.min(1,(avgT>=8&&avgT<=22?0.5:0.1)+(rain7>20?0.5:rain7>8?0.3:0.1)+hum*0.2),
+     detail:'T°moy '+avgT.toFixed(1)+'°C · '+rain7.toFixed(0)+'mm/7j'},
+    {name:'Rouille jaune',ico:'🌾',
+     score:Math.min(1,tmin7.some(function(t){return t<=0;})?0.05:(avgT>=8&&avgT<=15?0.55:avgT<=18?0.3:0.1)+hum*0.3+(rain3>5?0.15:0)),
+     detail:'T°moy '+avgT.toFixed(1)+'°C · '+rainDays+'j pluie'},
+    {name:'Fusariose épi',ico:'⚠️',
+     score:Math.min(1,(month>=4&&month<=6?0.4:0.1)+(avgT>=15&&avgT<=25?0.3:0.1)+(rain7>15?0.3:rain7>5?0.15:0.05)),
+     detail:rain7.toFixed(0)+'mm/7j · T°moy '+avgT.toFixed(1)+'°C'},
+    {name:'Oïdium',ico:'🔵',
+     score:Math.min(1,(avgT>=15&&avgT<=25?0.4:0.1)+(rain7<10?0.35:0.05)+(avgTmax>20?0.2:0.05)),
+     detail:'T°max '+avgTmax.toFixed(0)+'°C · '+rain7.toFixed(0)+'mm/7j'},
+    {name:'Helmintho.',ico:'🌿',
+     score:Math.min(1,(avgT>=10&&avgT<=20?0.4:0.15)+hum*0.4+(rain7>15?0.2:0.05)),
+     detail:'T°moy '+avgT.toFixed(1)+'°C · humidité sol'},
+    {name:'Piétin verse',ico:'🌱',
+     score:Math.min(1,(month<=4||month>=9?0.35:0.1)+(rain3>10?0.35:rain3>3?0.2:0.05)+(avgT<15?0.3:0.1)),
+     detail:rain3.toFixed(0)+'mm/3j · T°moy '+avgT.toFixed(1)+'°C'},
   ];
-
-  document.getElementById('semis-criteres').innerHTML = criteres.map(c => `
-    <div class="critere-card ${c.cls}">
-      <div class="critere-icon">${c.icon}</div>
-      <div class="critere-label">${c.label}</div>
-      <div class="critere-value">${c.value}</div>
-      <div class="critere-status">${c.status}</div>
-    </div>
-  `).join('');
-
-  // DATE CIBLE
-  const targetEl = document.getElementById('semis-target');
-  if (feuColor === 'vert') {
-    targetEl.innerHTML = `<div class="target-icon">✅</div><div class="target-text"><div class="target-label">Fenêtre de semis</div><div class="target-date" style="color:var(--green)">Conditions réunies maintenant</div><div class="target-range">Semer dès que la météo des 3 prochains jours le permet</div></div>`;
-  } else if (semisDate) {
-    const sd = new Date(semisDate);
-    targetEl.innerHTML = `<div class="target-icon">🎯</div><div class="target-text"><div class="target-label">Date cible estimée (si tendance confirmée)</div><div class="target-date">${DAYS[sd.getDay()]} ${sd.getDate()} ${MONTHS_LONG[sd.getMonth()]}</div><div class="target-range">Vérifier à nouveau à J-3 avant de déclencher</div></div>`;
-  } else {
-    // Estimate based on typical Sarthe dates
-    const estimYear = today.getFullYear();
-    const estimate = new Date(estimYear, 3, 20 + Math.floor(Math.random()*15)); // late April rough estimate
-    targetEl.innerHTML = `<div class="target-icon">📅</div><div class="target-text"><div class="target-label">Fenêtre estimée pour la Sarthe</div><div class="target-date" style="color:var(--maize-dark)">Fin avril — début mai ${estimYear}</div><div class="target-range">Suivre l'évolution T° sol à partir du 10 avril</div></div>`;
-  }
-
-  // SVG GRAPH
-  renderSoilChart(pastDates, pastAvgs, fcastDates, fcastAvgs);
-
-  // GRAPH sub-label
-  const lastPast = pastAvgs.filter(v=>v!==null);
-  const lastVal = lastPast[lastPast.length-1];
-  document.getElementById('soil-graph-sub').textContent =
-    `Moy. 5j : ${avg5 !== null ? avg5.toFixed(1) : '--'}°C · Valeur actuelle : ${currentSoilTemp !== null ? currentSoilTemp.toFixed(1) : '--'}°C · Source : Open-Meteo ERA5-Land modélisé`;
-
-  // CONSEILS SEMIS
-  const semisConseils = [];
-  if (feuColor === 'rouge' && gelRisk) semisConseils.push(`Gel prévu dans les 10 jours : un semis précoce risque la perte totale en cas de gelée tardive`);
-  if (feuColor === 'rouge' && !solOk) semisConseils.push(`Un semis avec T° sol < 10°C ralentit la germination et favorise les fontes de semis (Pythium, Fusarium)`);
-  semisConseils.push(`Privilégier une variété précoce à indice FAO 200-230 pour la Sarthe — meilleure tolérance au froid`);
-  semisConseils.push(`Vérifier la densité de semis : 85 000 à 95 000 grains/ha selon l'objectif (grain ou ensilage)`);
-  if (rain3j > 15) semisConseils.push(`Sol humide : risquer une date trop tôt détériore la structure — attendre le ressuyage`);
-  semisConseils.push(`Surveiller la T° sol chaque matin pendant 5 jours avant de décider — un thermomètre de sol (5-10€) est l'outil le plus fiable`);
-
-  document.getElementById('semis-conseils-list').innerHTML = semisConseils.map(c => `
-    <div class="semis-conseil-item">${c}</div>
-  `).join('');
-
-  // ================================================================
-  // FORECAST 7J
-  // ================================================================
-  document.getElementById('forecast-grid').innerHTML = daily.time.slice(0,7).map((d,i) => {
-    const rain = daily.precipitation_sum[i];
-    const prob = daily.precipitation_probability_max[i];
-    const [icon] = wmo(daily.weathercode[i]);
-    let cls = i===0 ? 'today' : (rain>3||prob>60) ? 'rain-risk' : (prob<20&&daily.temperature_2m_max[i]>12) ? 'good-day' : '';
-    return `<div class="day-card ${cls}">
-      <div class="day-name">${i===0?'Auj.':DAYS[new Date(d).getDay()]} ${new Date(d).getDate()}</div>
-      <div class="day-icon">${icon}</div>
-      <div class="day-temps"><span class="temp-max">${Math.round(daily.temperature_2m_max[i])}°</span><span class="temp-min">${Math.round(daily.temperature_2m_min[i])}°</span></div>
-      <div class="day-rain ${rain<1?'no-rain':''}">${rain<0.1?'— sec':'💧 '+rain+' mm'}${prob>10?'<br>('+prob+'%)':''}</div>
-      <div class="day-etp">ETP ${daily.et0_fao_evapotranspiration[i].toFixed(1)} mm</div>
-      <div class="day-wind">💨 ${Math.round(daily.wind_speed_10m_max[i])} km/h</div>
-    </div>`;
+  g('mal-grid').innerHTML=items.map(function(m){
+    var l=lv(m.score);
+    return '<div class="mal-card">'
+      +'<div class="mal-name">'+m.name+'</div>'
+      +'<div class="mal-row"><div class="mal-ico">'+m.ico+'</div><div class="mal-risk '+l.cls+'">'+l.label+'</div></div>'
+      +'<div class="mal-detail">'+m.detail+'</div>'
+      +'<div class="mal-bar"><div class="mal-fill '+l.bc+'" style="width:'+Math.round(m.score*100)+'%"></div></div>'
+      +'</div>';
   }).join('');
-
-  // TENDANCES
-  const tendLen = Math.min(daily.time.length - 7, 9);
-  document.getElementById('tendances-grid').innerHTML = Array.from({length: tendLen}, (_,i) => {
-    const idx = i + 7;
-    const rain = daily.precipitation_sum[idx];
-    const prob = daily.precipitation_probability_max[idx];
-    const [icon] = wmo(daily.weathercode[idx]);
-    const cls = (rain>3||prob>55) ? 'tend-rain' : (prob<25&&rain<1) ? 'tend-dry' : '';
-    const dd = new Date(daily.time[idx]);
-    return `<div class="tend-card ${cls}">
-      ${i>=6?'<div class="tend-uncertainty"></div>':''}
-      <div class="tend-name">${DAYS[dd.getDay()]} ${dd.getDate()}</div>
-      <div class="tend-icon">${icon}</div>
-      <div class="tend-temps"><span class="tend-tmax">${Math.round(daily.temperature_2m_max[idx])}°</span><span class="tend-tmin">${Math.round(daily.temperature_2m_min[idx])}°</span></div>
-      <div class="tend-rain-val ${rain<1?'dry':''}">${rain<0.1?'— sec':'~'+rain+' mm'}${prob>10?' ('+prob+'%)':''}</div>
-    </div>`;
-  }).join('');
-
-  // AGRO
-  const rain7 = daily.precipitation_sum.slice(0,7).reduce((a,b)=>a+b,0);
-  const etp7  = daily.et0_fao_evapotranspiration.slice(0,7).reduce((a,b)=>a+b,0);
-  const bilan = rain7 - etp7;
-  const rdays = daily.precipitation_sum.slice(0,7).filter(r=>r>=1).length;
-  document.getElementById('agro-grid').innerHTML = [
-    {label:'Cumul pluie 7j', val:rain7.toFixed(0), unit:'mm', bar:Math.min(100,rain7/50*100), bc:rain7>30?'rain':'green', interp:rain7>40?'Semaine très humide':rain7>15?'Semaine correcte':'Semaine sèche'},
-    {label:'ETP 7 jours', val:etp7.toFixed(1), unit:'mm évapotranspiration', bar:Math.min(100,etp7/30*100), bc:etp7>20?'danger':'', interp:etp7>25?'Demande hydrique forte':etp7>15?'Demande modérée':'Faible demande hydrique'},
-    {label:'Bilan hydrique 7j', val:(bilan>=0?'+':'')+bilan.toFixed(0), unit:'mm (Pluie − ETP)', bar:Math.min(100,Math.max(0,(bilan+20)/40*100)), bc:bilan<-10?'danger':bilan>5?'rain':'green', interp:bilan>5?'Excédent hydrique':bilan<-10?'Déficit — surveiller':'Équilibre satisfaisant'},
-    {label:'Journées exploitables', val:7-rdays, unit:'jours sans pluie ≥1mm / 7', bar:(7-rdays)/7*100, bc:(7-rdays)>=5?'green':(7-rdays)<=1?'danger':'', interp:rdays>=5?'Semaine très perturbée':rdays<=1?'Semaine très sèche':rdays+' jour'+(rdays>1?'s':'')+' de pluie prévus'},
-  ].map(a=>`<div class="agro-card"><div class="agro-label">${a.label}</div><div class="agro-value">${a.val}</div><div class="agro-unit">${a.unit}</div><div class="agro-bar"><div class="agro-bar-fill ${a.bc}" style="width:${a.bar}%"></div></div><div class="agro-interpretation">${a.interp}</div></div>`).join('');
-
-  // HOURLY
-  const si = hourly.time.findIndex(t => t.startsWith(todayStr) && parseInt(t.slice(11,13)) >= new Date().getHours());
-  const hs = hourly.time.slice(si, si+24);
-  const ht = hourly.temperature_2m.slice(si, si+24);
-  const hp = hourly.precipitation.slice(si, si+24);
-  const maxP = Math.max(...hp, 0.5);
-  document.getElementById('hourly-chart').innerHTML = hs.map((t,i) => `
-    <div class="hourly-col">
-      <span class="hourly-temp">${Math.round(ht[i])}°</span>
-      <div class="hourly-bar-wrap"><div class="hourly-bar" style="height:${Math.round(hp[i]/maxP*60)}px"></div></div>
-      <div class="hourly-time">${String(parseInt(t.slice(11,13))).padStart(2,'0')}h</div>
-    </div>`).join('');
-
-  // RAIN BARS
-  const maxR = Math.max(...daily.precipitation_sum.slice(0,7), 1);
-  document.getElementById('rain-bars').innerHTML = daily.time.slice(0,7).map((d,i) => {
-    const r = daily.precipitation_sum[i];
-    return `<div class="rain-col"><div class="rain-bar-val">${r>0.1?r+'mm':'—'}</div><div class="rain-bar-fill" style="height:${Math.round(r/maxR*50)}px"></div><div class="rain-bar-day">${DAYS[new Date(d).getDay()]}</div></div>`;
-  }).join('');
-
-  // === 4 NOUVEAUX MODULES ===
-  renderMaladies(daily, hourly);
-  renderTraitement(hourly, todayStr);
-  renderPluieNormales(histData, daily);
-  renderDJC(daily, histData);
 }
 
-// ================================================================
-// SVG SOIL CHART
-// ================================================================
-function renderSoilChart(pastDates, pastAvgs, fcastDates, fcastAvgs) {
-  const W = 800, H = 140, PAD = { top: 18, bottom: 24, left: 32, right: 10 };
-  const chartW = W - PAD.left - PAD.right;
-  const chartH = H - PAD.top - PAD.bottom;
-
-  const allVals = [...pastAvgs, ...fcastAvgs].filter(v => v !== null);
-  if (!allVals.length) return; // pas de données, on sort silencieusement
-  const minV = Math.min(...allVals, SEUIL_SOL) - 1;
-  const maxV = Math.max(...allVals, SEUIL_SOL) + 1;
-
-  const allDates = [...pastDates, ...fcastDates];
-  const N = allDates.length;
-
-  function xOf(i) { return PAD.left + (i / (N - 1)) * chartW; }
-  function yOf(v) { return PAD.top + chartH - ((v - minV) / (maxV - minV)) * chartH; }
-
-  // Threshold Y
-  const threshY = yOf(SEUIL_SOL);
-
-  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-
-  // Background zones
-  svg += `<rect x="${PAD.left}" y="${PAD.top}" width="${chartW}" height="${chartH}" fill="#fdfaf5"/>`;
-
-  // Grid lines
-  for (let t = Math.ceil(minV); t <= Math.floor(maxV); t += 2) {
-    const y = yOf(t);
-    svg += `<line x1="${PAD.left}" y1="${y}" x2="${W-PAD.right}" y2="${y}" stroke="#e8dfcf" stroke-width="0.5"/>`;
-    svg += `<text x="${PAD.left - 3}" y="${y + 3}" text-anchor="end" font-size="7" fill="#9a8878" font-family="DM Mono, monospace">${t}°</text>`;
+// ── PLANNING TRAITEMENT ─────────────────────────────────────────
+function renderTraitement(hourly,todayStr){
+  var nowH=new Date().getHours();
+  var si=0;
+  for(var i=0;i<hourly.time.length;i++){if(hourly.time[i].startsWith(todayStr)){si=i;break;}}
+  var slots=[];
+  for(var i=si;i<si+48&&i<hourly.time.length;i++){
+    slots.push({time:hourly.time[i],temp:hourly.temperature_2m[i],prec:hourly.precipitation[i],wind:hourly.wind_speed_10m[i]});
   }
-
-  // Threshold line
-  svg += `<line x1="${PAD.left}" y1="${threshY}" x2="${W-PAD.right}" y2="${threshY}" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.8"/>`;
-  svg += `<text x="${W-PAD.right-2}" y="${threshY - 3}" text-anchor="end" font-size="7" fill="#e74c3c" font-family="DM Mono,monospace">10°C</text>`;
-
-  // Separator past/forecast
-  const sepX = xOf(pastDates.length - 1);
-  svg += `<line x1="${sepX}" y1="${PAD.top}" x2="${sepX}" y2="${PAD.top+chartH}" stroke="#c8b89a" stroke-width="1" stroke-dasharray="3,3"/>`;
-  svg += `<text x="${sepX - 4}" y="${PAD.top + 9}" text-anchor="end" font-size="6.5" fill="#9a8878" font-family="DM Mono,monospace">passé</text>`;
-  svg += `<text x="${sepX + 4}" y="${PAD.top + 9}" text-anchor="start" font-size="6.5" fill="#9a8878" font-family="DM Mono,monospace">prévision</text>`;
-
-  // Fill area under forecast line
-  const fcastPoints = fcastAvgs.map((v, i) => {
-    const gi = pastDates.length + i;
-    return [xOf(gi), v !== null ? yOf(v) : null];
-  }).filter(p => p[1] !== null);
-
-  if (fcastPoints.length > 1) {
-    const areaPath = `M ${fcastPoints[0][0]},${PAD.top+chartH} ` +
-      fcastPoints.map(p => `L ${p[0]},${p[1]}`).join(' ') +
-      ` L ${fcastPoints[fcastPoints.length-1][0]},${PAD.top+chartH} Z`;
-    svg += `<path d="${areaPath}" fill="#e8b84b" opacity="0.12"/>`;
+  function eval_(s){
+    var h=parseInt(s.time.slice(11,13));
+    var past=s.time.startsWith(todayStr)&&h<nowH;
+    if(past)return 'p';
+    if(s.wind>20||s.prec>0.3||s.temp<5||s.temp>28)return 'r';
+    if(s.wind>15||s.prec>0||(h<6||h>=21))return 'o';
+    if(s.wind>10)return 'o';
+    return 'v';
   }
-
-  // Forecast line
-  const fcastLine = fcastAvgs.map((v,i) => {
-    const gi = pastDates.length + i;
-    if (v === null) return null;
-    return `${xOf(gi)},${yOf(v)}`;
-  }).filter(Boolean);
-  if (fcastLine.length > 1) {
-    svg += `<polyline points="${fcastLine.join(' ')}" fill="none" stroke="#e8b84b" stroke-width="2" stroke-dasharray="5,3" opacity="0.9"/>`;
+  var cur=slots[0];
+  for(var i=0;i<slots.length;i++){if(slots[i].time.startsWith(todayStr)&&parseInt(slots[i].time.slice(11,13))===nowH){cur=slots[i];break;}}
+  var now='<span class="djc-lbl" style="margin-right:4px">Maintenant :</span>';
+  if(cur){
+    now+='<span class="tb '+(cur.wind<=15?'ok':'bad')+'">💨 '+(cur.wind||0).toFixed(0)+' km/h</span>';
+    now+='<span class="tb '+(cur.prec===0?'ok':'bad')+'">🌧 '+(cur.prec||0).toFixed(1)+' mm</span>';
+    now+='<span class="tb '+(cur.temp>=5&&cur.temp<=28?'ok':'warn')+'">🌡 '+(cur.temp||0).toFixed(0)+'°C</span>';
   }
+  g('trt-now').innerHTML=now;
+  var shown=slots.filter(function(_,i){return i%2===0;});
+  g('trt-line').innerHTML=shown.map(function(s){
+    var st=eval_(s);
+    var e=st==='v'?'✅':st==='o'?'⚠️':st==='r'?'❌':'·';
+    var h=parseInt(s.time.slice(11,13));
+    return '<div class="trt-slot">'
+      +'<div class="trt-bar '+st+'">'+e+'</div>'
+      +'<div class="trt-t">'+Math.round(s.temp||0)+'°</div>'
+      +'<div class="trt-h">'+String(h).padStart(2,'0')+'h</div>'
+      +'</div>';
+  }).join('');
+}
 
-  // Fill area under past line
-  const pastPoints = pastAvgs.map((v, i) => {
-    if (v === null) return null;
-    return [xOf(i), yOf(v)];
-  }).filter(Boolean);
-
-  if (pastPoints.length > 1) {
-    const areaPath = `M ${pastPoints[0][0]},${PAD.top+chartH} ` +
-      pastPoints.map(p => `L ${p[0]},${p[1]}`).join(' ') +
-      ` L ${pastPoints[pastPoints.length-1][0]},${PAD.top+chartH} Z`;
-    svg += `<path d="${areaPath}" fill="#8b6914" opacity="0.1"/>`;
-  }
-
-  // Past line
-  const pastLine = pastAvgs.map((v,i) => v !== null ? `${xOf(i)},${yOf(v)}` : null).filter(Boolean);
-  if (pastLine.length > 1) {
-    svg += `<polyline points="${pastLine.join(' ')}" fill="none" stroke="#8b6914" stroke-width="2.5"/>`;
-  }
-
-  // Dots + labels for all points
-  allDates.forEach((ds, i) => {
-    const v = i < pastDates.length ? pastAvgs[i] : fcastAvgs[i - pastDates.length];
-    if (v === null) return;
-    const x = xOf(i), y = yOf(v);
-    const isFcast = i >= pastDates.length;
-    const color = isFcast ? '#e8b84b' : '#8b6914';
-    svg += `<circle cx="${x}" cy="${y}" r="3" fill="${color}" stroke="white" stroke-width="1"/>`;
-    // Label every other point to avoid clutter
-    if (i % 2 === 0) {
-      svg += `<text x="${x}" y="${y - 5}" text-anchor="middle" font-size="7" fill="${color}" font-family="DM Mono,monospace">${v.toFixed(1)}°</text>`;
-    }
-    // Date label at bottom
-    const dd = new Date(ds);
-    svg += `<text x="${x}" y="${PAD.top+chartH+10}" text-anchor="middle" font-size="6.5" fill="#9a8878" font-family="DM Mono,monospace">${dd.getDate()}/${dd.getMonth()+1}</text>`;
+// ── PLUIE VS NORMALES ───────────────────────────────────────────
+function renderPluie(daily){
+  var month=new Date().getMonth();
+  var rain7=daily.precipitation_sum.slice(0,7).reduce(function(a,b){return a+b;},0);
+  var normM=NORM[month];
+  var normW=normM/4.3;
+  var diff=rain7-normW;
+  var pct=Math.round((rain7/normW-1)*100);
+  var dcls=diff>3?'pd-ex':diff<-3?'pd-def':'pd-ok';
+  var dlbl=diff>3?'Excédent':diff<-3?'Déficit':'Normal';
+  g('pluie-stats').innerHTML=[
+    {lbl:'Cumul 7 derniers jours',val:rain7.toFixed(0),unit:'mm',diff:(diff>=0?'+':'')+diff.toFixed(0)+' mm vs normale',dcls:dcls},
+    {lbl:'Normale '+['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][month],val:normM,unit:'mm/mois (1991–2020)',diff:'Sarthe — Le Mans',dcls:'pd-ok'},
+    {lbl:'Normale semaine',val:normW.toFixed(0),unit:'mm/semaine — '+dlbl,diff:Math.abs(pct)+'% '+(diff>=0?'au-dessus':'en dessous'),dcls:dcls},
+  ].map(function(c){
+    return '<div class="pstat">'
+      +'<div class="pstat-lbl">'+c.lbl+'</div>'
+      +'<div class="pstat-val">'+c.val+'</div>'
+      +'<div class="pstat-unit">'+c.unit+'</div>'
+      +'<div class="pstat-diff '+c.dcls+'">'+c.diff+'</div>'
+      +'</div>';
+  }).join('');
+  // Chart
+  var maxV=Math.max.apply(null,daily.precipitation_sum.slice(0,7).concat([normW*2,1]));
+  var normJour=normW/7;
+  var W=800,H=110,PL=28,PT=14,PB=22,PR=10;
+  var cW=W-PL-PR,cH=H-PT-PB;
+  function xOf(i,n){return PL+(i+0.5)/n*cW;}
+  function yOf(v){return PT+cH-(v/maxV)*cH;}
+  var bw=cW/7*0.55;
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'
+    +'<rect x="'+PL+'" y="'+PT+'" width="'+cW+'" height="'+cH+'" fill="#fdfaf5"/>';
+  [0,Math.round(maxV/2),Math.round(maxV)].forEach(function(v){
+    var y=yOf(v);
+    svg+='<line x1="'+PL+'" y1="'+y+'" x2="'+(W-PR)+'" y2="'+y+'" stroke="#e8dfcf" stroke-width="0.5"/>';
+    svg+='<text x="'+(PL-3)+'" y="'+(y+3)+'" text-anchor="end" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">'+v+'</text>';
   });
-
-  svg += `</svg>`;
-  const wrap = document.getElementById('soil-chart-wrap');
-  if (wrap) wrap.innerHTML = svg.replace('<svg', `<svg id="soil-svg" style="width:100%;height:100%"`);
+  var ny=yOf(normJour);
+  svg+='<line x1="'+PL+'" y1="'+ny+'" x2="'+(W-PR)+'" y2="'+ny+'" stroke="#4a6fa5" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>';
+  svg+='<text x="'+(W-PR-2)+'" y="'+(ny-3)+'" text-anchor="end" font-size="7" fill="#4a6fa5" font-family="DM Mono,monospace">norm. '+normJour.toFixed(1)+'</text>';
+  daily.precipitation_sum.slice(0,7).forEach(function(v,i){
+    var x=xOf(i,7);
+    var bh=Math.max(2,(v/maxV)*cH);
+    svg+='<rect x="'+(x-bw/2)+'" y="'+yOf(v)+'" width="'+bw+'" height="'+bh+'" fill="'+(v>normJour?'#4a6fa5':'#a8c8e8')+'" rx="2" opacity="0.85"/>';
+    if(v>0.1)svg+='<text x="'+x+'" y="'+(yOf(v)-3)+'" text-anchor="middle" font-size="7" fill="#4a6fa5" font-family="DM Mono,monospace">'+v.toFixed(1)+'</text>';
+    var dd=new Date(daily.time[i]);
+    svg+='<text x="'+x+'" y="'+(PT+cH+10)+'" text-anchor="middle" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">'+DAYS[dd.getDay()]+'</text>';
+  });
+  svg+='</svg>';
+  svgIn(g('pluie-graph'),svg);
 }
 
-// ================================================================
-// MODULE 1 — MALADIES CÉRÉALES
-// ================================================================
-function renderMaladies(daily, hourlyData) {
-  // Collect last 7 days of conditions from forecast
-  const rain7 = daily.precipitation_sum.slice(0,7).reduce((a,b)=>a+b,0);
-  const rain3 = daily.precipitation_sum.slice(0,3).reduce((a,b)=>a+b,0);
-  const tmax7 = daily.temperature_2m_max.slice(0,7);
-  const tmin7 = daily.temperature_2m_min.slice(0,7);
-  const avgTmax = tmax7.reduce((a,b)=>a+b,0)/tmax7.length;
-  const avgTmin = tmin7.reduce((a,b)=>a+b,0)/tmin7.length;
-  const avgT = (avgTmax + avgTmin) / 2;
-  const rainDays = daily.precipitation_sum.slice(0,7).filter(r=>r>=1).length;
-  const humidityProxy = rainDays / 7; // 0-1 proxy for humidity
-
-  // Septoriose : favorisée par T° 10-25°C + pluie + humidité (début printemps)
-  function calcSeptoriose() {
-    const tOk = avgT >= 8 && avgT <= 22;
-    const rainOk = rain7 > 8;
-    const score = (tOk ? 0.5 : 0.1) + (rainOk ? (rain7 > 20 ? 0.5 : 0.3) : 0.1) + humidityProxy * 0.2;
-    return Math.min(1, score);
-  }
-
-  // Rouille jaune : favorisée par T° fraîches 8-15°C + humidité, gel la réduit
-  function calcRouilleJaune() {
-    const tIdeal = avgT >= 8 && avgT <= 15;
-    const tLimite = avgT > 15 && avgT <= 18;
-    const gelRecent = tmin7.some(t=>t<=0);
-    if (gelRecent) return 0.05;
-    const score = (tIdeal ? 0.55 : tLimite ? 0.3 : 0.1) + humidityProxy * 0.3 + (rain3 > 5 ? 0.15 : 0);
-    return Math.min(1, score);
-  }
-
-  // Fusariose épi : T° 15-25°C + pluie pendant floraison (mai-juin)
-  function calcFusariose() {
-    const month = new Date().getMonth(); // 0-11
-    const florisonPeriod = month >= 4 && month <= 6; // mai-juillet
-    const tOk = avgT >= 15 && avgT <= 25;
-    const score = (florisonPeriod ? 0.4 : 0.1) + (tOk ? 0.3 : 0.1) + (rain7 > 15 ? 0.3 : rain7 > 5 ? 0.15 : 0.05);
-    return Math.min(1, score);
-  }
-
-  // Oïdium : temps sec, chaud, T° 15-25°C
-  function calcOidium() {
-    const tOk = avgT >= 15 && avgT <= 25;
-    const dry = rain7 < 10;
-    const score = (tOk ? 0.4 : 0.1) + (dry ? 0.35 : 0.05) + (avgTmax > 20 ? 0.2 : 0.05);
-    return Math.min(1, score);
-  }
-
-  // Helminthosporiose : T° modérées + humidité
-  function calcHelm() {
-    const tOk = avgT >= 10 && avgT <= 20;
-    const score = (tOk ? 0.4 : 0.15) + humidityProxy * 0.4 + (rain7 > 15 ? 0.2 : 0.05);
-    return Math.min(1, score);
-  }
-
-  // Piétin verse : sol humide + T° fraîches automne/hiver/printemps
-  function calcPietin() {
-    const month = new Date().getMonth();
-    const period = month <= 4 || month >= 9; // oct-avril
-    const score = (period ? 0.35 : 0.1) + (rain3 > 10 ? 0.35 : rain3 > 3 ? 0.2 : 0.05) + (avgT < 15 ? 0.3 : 0.1);
-    return Math.min(1, score);
-  }
-
-  function level(score) {
-    if (score < 0.33) return { label: 'Faible', cls: 'risk-faible', barCls: 'faible' };
-    if (score < 0.66) return { label: 'Modéré', cls: 'risk-modere', barCls: 'modere' };
-    return { label: 'Élevé', cls: 'risk-eleve', barCls: 'eleve' };
-  }
-
-  const maladies = [
-    { name: 'Septoriose', icon: '🍃', score: calcSeptoriose(), detail: `T°moy ${avgT.toFixed(1)}°C · ${rain7.toFixed(0)}mm/7j` },
-    { name: 'Rouille jaune', icon: '🌾', score: calcRouilleJaune(), detail: `T°moy ${avgT.toFixed(1)}°C · ${rainDays}j de pluie` },
-    { name: 'Fusariose épi', icon: '⚠️', score: calcFusariose(), detail: `${rain7.toFixed(0)}mm/7j · T°moy ${avgT.toFixed(1)}°C` },
-    { name: 'Oïdium', icon: '🔵', score: calcOidium(), detail: `T°max ${avgTmax.toFixed(0)}°C · ${rain7.toFixed(0)}mm/7j` },
-    { name: 'Helmintho.', icon: '🌿', score: calcHelm(), detail: `T°moy ${avgT.toFixed(1)}°C · humidité sol` },
-    { name: 'Piétin verse', icon: '🌱', score: calcPietin(), detail: `${rain3.toFixed(0)}mm/3j · T°moy ${avgT.toFixed(1)}°C` },
+// ── DJC ─────────────────────────────────────────────────────────
+var STADES_MAIS=[{d:0,l:'Semis',i:'🌱'},{d:50,l:'Levée (VE)',i:'🌿'},{d:200,l:'4 feuilles',i:'🌾'},{d:400,l:'8 feuilles',i:'🌾'},{d:650,l:'Floraison ♂',i:'🌻'},{d:750,l:'Floraison ♀',i:'🌽'},{d:1200,l:'Maturité',i:'✅'}];
+var STADES_BLE=[{d:0,l:'Semis',i:'🌱'},{d:100,l:'Levée',i:'🌿'},{d:300,l:'Tallage',i:'🌾'},{d:700,l:'Montaison',i:'🌾'},{d:1000,l:'Épiaison',i:'🌾'},{d:1200,l:'Floraison',i:'🌸'},{d:1600,l:'Maturité',i:'✅'}];
+var STADES_ORGE=[{d:0,l:'Semis',i:'🌱'},{d:80,l:'Levée',i:'🌿'},{d:250,l:'Tallage',i:'🌾'},{d:600,l:'Montaison',i:'🌾'},{d:900,l:'Épiaison',i:'🌾'},{d:1400,l:'Maturité',i:'✅'}];
+var STADES_COLZA=[{d:0,l:'Semis',i:'🌱'},{d:100,l:'Levée',i:'🌿'},{d:300,l:'Rosette',i:'🌿'},{d:600,l:'Montaison',i:'🌿'},{d:900,l:'Floraison',i:'🌼'},{d:1300,l:'Maturité',i:'✅'}];
+var _djcFcast=null;
+function getStade(djc,stades){
+  var cur=stades[0],next=null;
+  for(var i=stades.length-1;i>=0;i--){if(djc>=stades[i].d){cur=stades[i];break;}}
+  for(var i=0;i<stades.length;i++){if(stades[i].d>djc){next=stades[i];break;}}
+  return {cur:cur,next:next};
+}
+function djcDay(tmax,tmin,base){return Math.max(0,(tmax+tmin)/2-base);}
+function renderDJC(daily){
+  _djcFcast=daily;
+  var saved=localStorage.getItem('djc_semis');
+  var def=new Date().getFullYear()+'-04-25';
+  var sd=saved||def;
+  g('djc-date').value=sd;
+  _computeDJC(sd,daily);
+}
+function recalcDJC(){
+  var d=g('djc-date').value;
+  if(d){localStorage.setItem('djc_semis',d);if(_djcFcast)_computeDJC(d,_djcFcast);}
+}
+function _computeDJC(sdStr,daily){
+  var today=new Date();
+  var todayStr=today.toISOString().slice(0,10);
+  var days=Math.floor((today-new Date(sdStr))/86400000);
+  g('djc-hint').textContent=days>=0?'J+'+days+' depuis le semis':'Dans '+Math.abs(days)+' jours';
+  var mais=0,ble=0,orge=0,colza=0;
+  var curveDates=[],curveMais=[],curveBle=[];
+  daily.time.forEach(function(d,i){
+    if(d<sdStr)return;
+    var tm=daily.temperature_2m_max[i],tn=daily.temperature_2m_min[i];
+    mais+=djcDay(tm,tn,10);ble+=djcDay(tm,tn,0);orge+=djcDay(tm,tn,0);colza+=djcDay(tm,tn,0);
+    if(d<=todayStr){curveDates.push(d);curveMais.push(mais);curveBle.push(ble);}
+  });
+  if(days<0){mais=ble=orge=colza=0;}
+  var cultures=[
+    {n:'🌽 Maïs',cls:'mais',djc:Math.round(mais),max:1200,stades:STADES_MAIS},
+    {n:'🌾 Blé',cls:'ble',djc:Math.round(ble),max:1600,stades:STADES_BLE},
+    {n:'🟤 Orge',cls:'orge',djc:Math.round(orge),max:1400,stades:STADES_ORGE},
+    {n:'🌼 Colza',cls:'colza',djc:Math.round(colza),max:1300,stades:STADES_COLZA},
   ];
-
-  document.getElementById('maladies-grid').innerHTML = maladies.map(m => {
-    const lv = level(m.score);
-    return `<div class="maladie-card">
-      <div class="maladie-name">${m.name}</div>
-      <div class="maladie-risk-wrap">
-        <div class="maladie-icon">${m.icon}</div>
-        <div class="maladie-risk-label ${lv.cls}">${lv.label}</div>
-      </div>
-      <div class="maladie-detail">${m.detail}</div>
-      <div class="maladie-bar"><div class="maladie-bar-fill ${lv.barCls}" style="width:${Math.round(m.score*100)}%"></div></div>
-    </div>`;
+  g('djc-cards').innerHTML=cultures.map(function(c){
+    var s=getStade(c.djc,c.stades);
+    var pct=Math.min(100,c.djc/c.max*100);
+    return '<div class="djc-card '+c.cls+'">'
+      +'<div class="djc-cn">'+c.n+'</div>'
+      +'<div class="djc-stade">'+s.cur.i+' '+s.cur.l+'</div>'
+      +'<div class="djc-val">'+c.djc+' DJC accumulés</div>'
+      +'<div class="djc-bar"><div class="djc-fill '+c.cls+'" style="width:'+pct+'%"></div></div>'
+      +'<div class="djc-next">'+(s.next?'→ '+s.next.i+' '+s.next.l+' dans ~'+(s.next.d-c.djc)+' DJC':'✅ Cycle complet')+'</div>'
+      +'</div>';
   }).join('');
+  // DJC chart
+  if(!curveDates.length){svgIn(g('djc-graph'),'');return;}
+  var maxV=Math.max.apply(null,curveMais.concat(curveBle).concat([100]));
+  var N=curveDates.length;
+  var W=800,H=100,PL=34,PT=12,PB=20,PR=10;
+  var cW=W-PL-PR,cH=H-PT-PB;
+  function xOf(i){return PL+(i/Math.max(N-1,1))*cW;}
+  function yOf(v){return PT+cH-(v/maxV)*cH;}
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'
+    +'<rect x="'+PL+'" y="'+PT+'" width="'+cW+'" height="'+cH+'" fill="#fdfaf5"/>';
+  [0,Math.round(maxV/2),Math.round(maxV)].forEach(function(v){
+    var y=yOf(v);
+    svg+='<line x1="'+PL+'" y1="'+y+'" x2="'+(W-PR)+'" y2="'+y+'" stroke="#e8dfcf" stroke-width="0.5"/>';
+    svg+='<text x="'+(PL-3)+'" y="'+(y+3)+'" text-anchor="end" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">'+v+'</text>';
+  });
+  if(curveBle.length>1){
+    var pts=curveBle.map(function(v,i){return xOf(i)+','+yOf(v);}).join(' ');
+    svg+='<polyline points="'+pts+'" fill="none" stroke="#c9a84c" stroke-width="2" opacity="0.8"/>';
+  }
+  if(curveMais.length>1){
+    var pts=curveMais.map(function(v,i){return xOf(i)+','+yOf(v);}).join(' ');
+    svg+='<polyline points="'+pts+'" fill="none" stroke="#e8b84b" stroke-width="2.5"/>';
+  }
+  var step=Math.max(1,Math.floor(N/6));
+  curveDates.forEach(function(d,i){
+    if(i%step===0){
+      var dd=new Date(d);
+      svg+='<text x="'+xOf(i)+'" y="'+(PT+cH+10)+'" text-anchor="middle" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">'+dd.getDate()+'/'+(dd.getMonth()+1)+'</text>';
+    }
+  });
+  svg+='<circle cx="'+(W-80)+'" cy="'+(PT+8)+'" r="4" fill="#e8b84b"/><text x="'+(W-73)+'" y="'+(PT+12)+'" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">Maïs</text>';
+  svg+='<circle cx="'+(W-40)+'" cy="'+(PT+8)+'" r="4" fill="#c9a84c"/><text x="'+(W-33)+'" y="'+(PT+12)+'" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">Blé</text>';
+  svg+='</svg>';
+  svgIn(g('djc-graph'),svg);
 }
 
-// ================================================================
-// MODULE 2 — PLANNING TRAITEMENT 48H
-// ================================================================
-function renderTraitement(hourly, todayStr) {
-  const nowH = new Date().getHours();
-  const si = hourly.time.findIndex(t => t.startsWith(todayStr));
-  // Take 48 hours from start of today
-  const slots = [];
-  for (let i = si; i < si + 48 && i < hourly.time.length; i++) {
-    slots.push({
-      time: hourly.time[i],
-      temp: hourly.temperature_2m[i],
-      prec: hourly.precipitation[i],
-      wind: hourly.wind_speed_10m[i],
+// ── SEMIS ────────────────────────────────────────────────────────
+function renderSemisBase(daily){
+  var rain3=daily.precipitation_sum.slice(0,3).reduce(function(a,b){return a+b;},0);
+  var gelRisk=daily.temperature_2m_min.slice(0,10).some(function(t){return t<=0;});
+  var minGel=Math.min.apply(null,daily.temperature_2m_min.slice(0,10));
+  var portanceOk=rain3<20;
+  // Without hist: use forecast soil only
+  var fcastAvgs=[];
+  for(var i=0;i<7;i++){
+    var avg=soilAvg(daily._hourly_times||[],daily._hourly_soil||[],daily.time[i]);
+    fcastAvgs.push(avg);
+  }
+  var solNow=fcastAvgs[0]||null;
+  var recent=fcastAvgs.slice(0,5).filter(function(v){return v!==null;});
+  var avg5=recent.length?recent.reduce(function(a,b){return a+b;},0)/recent.length:null;
+  var solOk=avg5!==null&&avg5>=SEUIL;
+  var fc,vt,vd;
+  if(gelRisk){fc='r';vt='Ne pas semer — Gel prévu';vd='Gel attendu (Tmin '+minGel+'°C)\nAttendre la fin du risque gel';}
+  else if(!solOk){fc='r';vt='Sol trop froid — Attendre';vd='Moy. sol : '+(avg5!==null?avg5.toFixed(1):'?')+'°C — seuil 10°C requis';}
+  else if(!portanceOk){fc='o';vt='Sol chaud mais terrain détrempé';vd='T° sol OK mais '+rain3.toFixed(0)+' mm/3j\nAttendre le ressuyage';}
+  else{fc='g';vt='Conditions favorables — Vous pouvez semer';vd='T° sol ≥ 10°C · Portance OK · Pas de gel prévu';}
+  g('fr').classList.toggle('on',fc==='r');
+  g('fo').classList.toggle('on',fc==='o');
+  g('fg').classList.toggle('on',fc==='g');
+  var vtEl=g('vt');vtEl.textContent=vt;vtEl.className='vt '+fc;
+  g('vd').textContent=vd;
+  var criteres=[
+    {ico:'🌡',lbl:'T° sol 6cm (modèle)',val:solNow!==null?solNow.toFixed(1)+'°C':'--',st:solNow!==null&&solNow>=SEUIL?'✓ Seuil atteint':'< 10°C',cls:solNow!==null&&solNow>=SEUIL?'ok':'block'},
+    {ico:'📈',lbl:'Moy. 5 jours sol',val:avg5!==null?avg5.toFixed(1)+'°C':'--',st:solOk?'✓ ≥ 10°C':'Insuffisant',cls:solOk?'ok':'block'},
+    {ico:'❄️',lbl:'Risque gel 10j',val:gelRisk?minGel+'°C':'Aucun',st:gelRisk?'⚠ Gel prévu':'✓ Pas de gel',cls:gelRisk?'block':'ok'},
+    {ico:'🚜',lbl:'Portance (pluie 3j)',val:rain3.toFixed(0)+' mm',st:portanceOk?'✓ Acceptable':'⚠ Détrempé',cls:portanceOk?'ok':'warn'},
+  ];
+  g('semis-crit').innerHTML=criteres.map(function(c){
+    return '<div class="crit-card '+c.cls+'">'
+      +'<div class="cc-ico">'+c.ico+'</div>'
+      +'<div class="cc-lbl">'+c.lbl+'</div>'
+      +'<div class="cc-val">'+c.val+'</div>'
+      +'<div class="cc-st">'+c.st+'</div>'
+      +'</div>';
+  }).join('');
+  // Target date
+  var semisD=findSemisDate(daily.time.slice(0,7),fcastAvgs);
+  var tEl=g('semis-target');
+  if(fc==='g'){
+    tEl.innerHTML='<div class="target-ico">✅</div><div><div class="target-lbl">Fenêtre de semis</div><div class="target-date" style="color:var(--green)">Conditions réunies maintenant</div><div class="target-range">Semer dès la prochaine bonne fenêtre météo</div></div>';
+  }else if(semisD){
+    var sd=new Date(semisD);
+    tEl.innerHTML='<div class="target-ico">🎯</div><div><div class="target-lbl">Date cible estimée</div><div class="target-date">'+DAYS[sd.getDay()]+' '+sd.getDate()+' '+MOL[sd.getMonth()]+'</div><div class="target-range">Confirmer à J-3 avant de déclencher</div></div>';
+  }else{
+    tEl.innerHTML='<div class="target-ico">📅</div><div><div class="target-lbl">Fenêtre typique Sarthe</div><div class="target-date">Fin avril — début mai</div><div class="target-range">Surveiller la T° sol à partir du 10 avril</div></div>';
+  }
+  // Tips
+  var tips=[];
+  if(fc==='r'&&gelRisk)tips.push('Gel prévu : un semis précoce risque la perte totale');
+  if(fc==='r'&&!solOk)tips.push('Sol < 10°C : risque de fonte des semis (Pythium, Fusarium)');
+  tips.push('Variété conseillée : FAO 200-230 pour la Sarthe');
+  tips.push('Densité : 85 000 à 95 000 grains/ha');
+  tips.push('Confirmer avec un thermomètre de sol (5-10€) avant de décider');
+  g('semis-tips').innerHTML=tips.map(function(t){return '<div class="stip">'+t+'</div>';}).join('');
+}
+
+function updateSoilChart(pastDates,pastAvgs,fcastDates,fcastAvgs){
+  var all=pastAvgs.concat(fcastAvgs).filter(function(v){return v!==null;});
+  if(!all.length){g('soil-sub').textContent='Données sol non disponibles';return;}
+  var minV=Math.min.apply(null,all.concat([SEUIL]))-1;
+  var maxV=Math.max.apply(null,all.concat([SEUIL]))+1;
+  var allDates=pastDates.concat(fcastDates);
+  var N=allDates.length;
+  var W=800,H=130,PL=30,PT=16,PB=22,PR=10;
+  var cW=W-PL-PR,cH=H-PT-PB;
+  function xOf(i){return PL+(i/Math.max(N-1,1))*cW;}
+  function yOf(v){return PT+cH-((v-minV)/(maxV-minV))*cH;}
+  var thY=yOf(SEUIL);
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'
+    +'<rect x="'+PL+'" y="'+PT+'" width="'+cW+'" height="'+cH+'" fill="#fdfaf5"/>';
+  for(var t=Math.ceil(minV);t<=Math.floor(maxV);t+=2){
+    var y=yOf(t);
+    svg+='<line x1="'+PL+'" y1="'+y+'" x2="'+(W-PR)+'" y2="'+y+'" stroke="#e8dfcf" stroke-width="0.5"/>';
+    svg+='<text x="'+(PL-3)+'" y="'+(y+3)+'" text-anchor="end" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">'+t+'°</text>';
+  }
+  svg+='<line x1="'+PL+'" y1="'+thY+'" x2="'+(W-PR)+'" y2="'+thY+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.8"/>';
+  svg+='<text x="'+(W-PR-2)+'" y="'+(thY-3)+'" text-anchor="end" font-size="7" fill="#e74c3c" font-family="DM Mono,monospace">10°C</text>';
+  var sepX=xOf(pastDates.length-1);
+  svg+='<line x1="'+sepX+'" y1="'+PT+'" x2="'+sepX+'" y2="'+(PT+cH)+'" stroke="#c8b89a" stroke-width="1" stroke-dasharray="3,3"/>';
+  svg+='<text x="'+(sepX-3)+'" y="'+(PT+8)+'" text-anchor="end" font-size="6" fill="#9a8878" font-family="DM Mono,monospace">passé</text>';
+  svg+='<text x="'+(sepX+3)+'" y="'+(PT+8)+'" text-anchor="start" font-size="6" fill="#9a8878" font-family="DM Mono,monospace">prévision</text>';
+  // forecast area
+  var fp=fcastAvgs.map(function(v,i){return v!==null?{x:xOf(pastDates.length+i),y:yOf(v)}:null;}).filter(Boolean);
+  if(fp.length>1){
+    var ap='M '+fp[0].x+','+(PT+cH)+' '+fp.map(function(p){return 'L '+p.x+','+p.y;}).join(' ')+' L '+fp[fp.length-1].x+','+(PT+cH)+' Z';
+    svg+='<path d="'+ap+'" fill="#e8b84b" opacity="0.12"/>';
+    svg+='<polyline points="'+fp.map(function(p){return p.x+','+p.y;}).join(' ')+'" fill="none" stroke="#e8b84b" stroke-width="2" stroke-dasharray="5,3"/>';
+  }
+  // past area + line
+  var pp=pastAvgs.map(function(v,i){return v!==null?{x:xOf(i),y:yOf(v)}:null;}).filter(Boolean);
+  if(pp.length>1){
+    var ap='M '+pp[0].x+','+(PT+cH)+' '+pp.map(function(p){return 'L '+p.x+','+p.y;}).join(' ')+' L '+pp[pp.length-1].x+','+(PT+cH)+' Z';
+    svg+='<path d="'+ap+'" fill="#8b6914" opacity="0.1"/>';
+    svg+='<polyline points="'+pp.map(function(p){return p.x+','+p.y;}).join(' ')+'" fill="none" stroke="#8b6914" stroke-width="2.5"/>';
+  }
+  // dots
+  allDates.forEach(function(ds,i){
+    var v=i<pastDates.length?pastAvgs[i]:fcastAvgs[i-pastDates.length];
+    if(v===null)return;
+    var x=xOf(i),y=yOf(v);
+    var col=i>=pastDates.length?'#e8b84b':'#8b6914';
+    svg+='<circle cx="'+x+'" cy="'+y+'" r="3" fill="'+col+'" stroke="white" stroke-width="1"/>';
+    if(i%2===0)svg+='<text x="'+x+'" y="'+(y-5)+'" text-anchor="middle" font-size="7" fill="'+col+'" font-family="DM Mono,monospace">'+v.toFixed(1)+'°</text>';
+    var dd=new Date(ds);
+    svg+='<text x="'+x+'" y="'+(PT+cH+10)+'" text-anchor="middle" font-size="6.5" fill="#9a8878" font-family="DM Mono,monospace">'+dd.getDate()+'/'+(dd.getMonth()+1)+'</text>';
+  });
+  svg+='</svg>';
+  svgIn(g('soil-wrap'),svg);
+  var avg5=pastAvgs.slice(-5).filter(function(v){return v!==null;});
+  var a5=avg5.length?avg5.reduce(function(a,b){return a+b;},0)/avg5.length:null;
+  var cur=fcastAvgs[0];
+  g('soil-sub').textContent='Moy. 5j : '+(a5?a5.toFixed(1):'--')+'°C · Actuel : '+(cur?cur.toFixed(1):'--')+'°C · Source : ERA5-Land modélisé';
+}
+
+// ── MAIN RENDER ──────────────────────────────────────────────────
+function render(data){
+  _fcast=data;
+  var daily=data.daily,hourly=data.hourly,cw=data.current_weather;
+  var today=new Date(),todayStr=today.toISOString().slice(0,10);
+
+  // Attacher les hourly au daily pour accès dans renderSemisBase
+  daily._hourly_times=hourly.time;
+  daily._hourly_soil=hourly.soil_temperature_6cm;
+
+  renderBanner(data);
+  renderAlerts(daily);
+  renderConseils(daily,cw);
+
+  // Forecast soil avgs
+  var fcastDates=[],fcastAvgs=[];
+  for(var i=0;i<7;i++){
+    fcastDates.push(daily.time[i]);
+    fcastAvgs.push(soilAvg(hourly.time,hourly.soil_temperature_6cm,daily.time[i]));
+  }
+  renderSemisBase(daily);
+  // Chart with forecast data only first
+  var placeholderPast=fcastDates.map(function(){return null;});
+  updateSoilChart([],fcastAvgs.slice(0,1),fcastDates,fcastAvgs);
+
+  renderForecast(daily);
+  renderTendances(daily);
+  renderMaladies(daily);
+  renderTraitement(hourly,todayStr);
+  renderPluie(daily);
+  renderDJC(daily);
+  renderAgro(daily);
+  renderHourly(hourly,todayStr);
+  renderRain(daily);
+
+  g('loading').style.display='none';
+  g('content').style.display='block';
+}
+
+function updateSoilHistory(fcast,hist){
+  var today=new Date(),todayStr=today.toISOString().slice(0,10);
+  var daily=fcast.daily,hourly=fcast.hourly;
+  var pastDates=[],pastAvgs=[];
+  for(var i=6;i>=0;i--){
+    var d=new Date(today);d.setDate(today.getDate()-i);
+    var ds=d.toISOString().slice(0,10);
+    pastDates.push(ds);
+    pastAvgs.push(soilAvg(hist.hourly.time,hist.hourly.soil_temperature_6cm,ds));
+  }
+  var fcastDates=[],fcastAvgs=[];
+  for(var i=0;i<7;i++){
+    fcastDates.push(daily.time[i]);
+    fcastAvgs.push(soilAvg(hourly.time,hourly.soil_temperature_6cm,daily.time[i]));
+  }
+  updateSoilChart(pastDates,pastAvgs,fcastDates,fcastAvgs);
+  // Mise à jour feu tricolore avec vraies données
+  var recent=pastAvgs.slice(-5).filter(function(v){return v!==null;});
+  var avg5=recent.length?recent.reduce(function(a,b){return a+b;},0)/recent.length:null;
+  var rain3=daily.precipitation_sum.slice(0,3).reduce(function(a,b){return a+b;},0);
+  var gelRisk=daily.temperature_2m_min.slice(0,10).some(function(t){return t<=0;});
+  var minGel=Math.min.apply(null,daily.temperature_2m_min.slice(0,10));
+  var portanceOk=rain3<20;
+  var solOk=avg5!==null&&avg5>=SEUIL;
+  var fc,vt,vd;
+  if(gelRisk){fc='r';vt='Ne pas semer — Gel prévu';vd='Gel attendu (Tmin '+minGel+'°C)';}
+  else if(!solOk){fc='r';vt='Sol trop froid — Attendre';vd='Moy. 5j sol : '+(avg5!==null?avg5.toFixed(1):'?')+'°C (seuil 10°C)';}
+  else if(!portanceOk){fc='o';vt='Sol chaud mais terrain détrempé';vd='T° sol OK — attendre ressuyage';}
+  else{fc='g';vt='Conditions favorables — Vous pouvez semer';vd='T° sol ≥ 10°C · Portance OK · Pas de gel';}
+  g('fr').classList.toggle('on',fc==='r');
+  g('fo').classList.toggle('on',fc==='o');
+  g('fg').classList.toggle('on',fc==='g');
+  var vtEl=g('vt');vtEl.textContent=vt;vtEl.className='vt '+fc;
+  g('vd').textContent=vd;
+}
+
+// ── FETCH ────────────────────────────────────────────────────────
+function fetchAll(){
+  g('loading').style.display='block';
+  g('loading').innerHTML='<div class="spinner"></div>Chargement des données météo…';
+  g('content').style.display='none';
+  var today=new Date();
+  var todayStr=today.toISOString().slice(0,10);
+  var past7=new Date(today);past7.setDate(today.getDate()-7);
+  var past7str=past7.toISOString().slice(0,10);
+  var urlF='https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON
+    +'&hourly=temperature_2m,precipitation,wind_speed_10m,weathercode,soil_temperature_6cm'
+    +'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,et0_fao_evapotranspiration,weathercode,precipitation_probability_max'
+    +'&current_weather=true&forecast_days=16&timezone=Europe%2FParis';
+  var urlH='https://archive-api.open-meteo.com/v1/archive?latitude='+LAT+'&longitude='+LON
+    +'&hourly=soil_temperature_6cm&start_date='+past7str+'&end_date='+todayStr+'&timezone=Europe%2FParis';
+  fetch(urlF)
+    .then(function(r){return r.json();})
+    .then(function(fcast){
+      render(fcast);
+      // Historique sol en arrière-plan
+      fetch(urlH)
+        .then(function(r){return r.json();})
+        .then(function(hist){updateSoilHistory(fcast,hist);})
+        .catch(function(){});
+    })
+    .catch(function(e){
+      console.error(e);
+      g('loading').innerHTML='<p style="color:#c0392b;text-align:center;padding:40px;font-family:DM Mono,monospace">❌ Erreur de chargement.<br><small>Vérifiez la connexion internet.</small></p>';
     });
-  }
-
-  // Evaluate each slot
-  function evalSlot(s) {
-    const h = parseInt(s.time.slice(11,13));
-    const isPast = s.time.slice(0,10) === todayStr && h < nowH;
-    if (isPast) return 'passe';
-    // Night hours 22h-6h: not ideal
-    const isNight = h < 6 || h >= 21;
-    if (s.wind > 20) return 'rouge';   // vent > 20 km/h
-    if (s.prec > 0.3) return 'rouge';  // pluie
-    if (s.temp < 5 || s.temp > 28) return 'rouge'; // T° hors plage
-    if (s.wind > 15 || s.prec > 0 || isNight) return 'orange';
-    if (s.wind > 10) return 'orange';
-    return 'vert';
-  }
-
-  // Current conditions badge
-  const nowSlot = slots.find(s => {
-    const h = parseInt(s.time.slice(11,13));
-    return s.time.startsWith(todayStr) && h === nowH;
-  }) || slots[0];
-
-  const critNow = [];
-  if (nowSlot) {
-    const windOk = nowSlot.wind <= 15;
-    const rainOk = nowSlot.prec === 0;
-    const tempOk = nowSlot.temp >= 5 && nowSlot.temp <= 28;
-    critNow.push(`<span class="trit-badge ${windOk?'ok':'block'}">💨 Vent ${Math.round(nowSlot.wind||0)} km/h ${windOk?'✓':'✗'}</span>`);
-    critNow.push(`<span class="trit-badge ${rainOk?'ok':'block'}">🌧 Pluie ${(nowSlot.prec||0).toFixed(1)}mm ${rainOk?'✓':'✗'}</span>`);
-    critNow.push(`<span class="trit-badge ${tempOk?'ok':'warn'}">🌡 ${(nowSlot.temp||0).toFixed(0)}°C ${tempOk?'✓':'limité'}</span>`);
-  }
-  document.getElementById('traitement-criteres-now').innerHTML = `<span class="djc-label" style="margin-right:4px">Maintenant :</span>` + critNow.join('');
-
-  // Timeline — show every 2h to fit screen
-  const shown = slots.filter((_,i) => i%2===0);
-  document.getElementById('traitement-timeline').innerHTML = shown.map(s => {
-    const h = parseInt(s.time.slice(11,13));
-    const status = evalSlot(s);
-    const emoji = status==='vert'?'✅':status==='orange'?'⚠️':status==='rouge'?'❌':'·';
-    return `<div class="traitement-slot">
-      <div class="slot-bar ${status}">${emoji}</div>
-      <div class="slot-temp">${Math.round(s.temp||0)}°</div>
-      <div class="slot-hour">${String(h).padStart(2,'0')}h</div>
-    </div>`;
-  }).join('');
 }
 
-// ================================================================
-// MODULE 3 — CUMUL PLUIE VS NORMALES
-// ================================================================
-
-// Normales climatologiques mensuelles Sarthe (station Le Mans, moyenne 1991-2020)
-const NORMALES_MENSUELLES = [65,52,56,50,62,57,52,51,59,74,72,70]; // Jan-Déc mm
-
-function renderPluieNormales(histData, daily) {
-  const today = new Date();
-  const month = today.getMonth();
-
-  // Cumul 30 derniers jours depuis historique + prévisions
-  const hist30 = histData.hourly.soil_temperature_6cm; // on a l'historique
-  // Utiliser les précipitations du forecast pour les 7 prochains jours
-  const rainForecast7 = daily.precipitation_sum.slice(0,7).reduce((a,b)=>a+b,0);
-
-  // Estimation cumul 30j : on dispose de l'historique 7j uniquement
-  // On extrapole en supposant que les 23j précédents sont proches de la normale
-  // Pour avoir le "vrai" cumul 30j, on utilise la normale proratisée
-  const norm30 = (NORMALES_MENSUELLES[month] / 30) * 30;
-  const norm7 = (NORMALES_MENSUELLES[month] / 30) * 7;
-
-  // Utiliser les données ERA5 soil comme proxy pour estimer récents cumuls
-  // On calcule à partir du forecast 7j et d'une estimation des 23j précédents
-  const rainForecast = daily.precipitation_sum.slice(0,7).reduce((a,b)=>a+b,0);
-
-  // Pour la démo on utilise cumul mois en cours depuis forecast
-  const cumul7j = daily.precipitation_sum.slice(0,7).reduce((a,b)=>a+b,0);
-  const normMois = NORMALES_MENSUELLES[month];
-  const normSemaine = normMois / 4.3;
-  const diff7j = cumul7j - normSemaine;
-  const diffPct = Math.round((cumul7j / normSemaine - 1) * 100);
-
-  // Cumul mensuel estimé (7j réel + prorata du reste)
-  const joursDuMois = new Date(today.getFullYear(), month+1, 0).getDate();
-  const joursEcoules = today.getDate();
-  const prorata = joursEcoules > 0 ? (cumul7j / Math.min(joursEcoules, 7)) * joursEcoules : 0;
-  const prorataAnnuel = prorata;
-
-  const bilanLabel = diff7j > 3 ? 'Excédent' : diff7j < -3 ? 'Déficit' : 'Normal';
-  const bilanCls = diff7j > 3 ? 'excess' : diff7j < -3 ? 'deficit' : 'normal';
-
-  document.getElementById('pluie-bilan').innerHTML = [
-    { label: 'Cumul 7 derniers jours', val: cumul7j.toFixed(0), unit: 'mm', diff: `${diff7j>=0?'+':''}${diff7j.toFixed(0)} mm vs normale`, cls: bilanCls },
-    { label: `Normale ${['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][month]}`, val: normMois.toFixed(0), unit: 'mm/mois (1991–2020)', diff: `Sarthe — station Le Mans`, cls: 'normal' },
-    { label: 'Normale semaine', val: normSemaine.toFixed(0), unit: `mm/semaine · ${bilanLabel}`, diff: `${Math.abs(diffPct)}% ${diff7j>=0?'au-dessus':'en dessous'}`, cls: bilanCls },
-  ].map(c => `<div class="pluie-bilan-card">
-    <div class="pluie-bilan-label">${c.label}</div>
-    <div class="pluie-bilan-val">${c.val}</div>
-    <div class="pluie-bilan-unit">${c.unit}</div>
-    <div class="pluie-bilan-diff ${c.cls}">${c.diff}</div>
-  </div>`).join('');
-
-  // SVG chart — 7 jours réel vs normale journalière
-  renderPluieChart(daily, normSemaine / 7);
+// ── GÉOLOCALISATION ──────────────────────────────────────────────
+function gps(){
+  var btn=g('btn-gps');btn.textContent='⏳';btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(function(pos){
+    LAT=parseFloat(pos.coords.latitude.toFixed(4));
+    LON=parseFloat(pos.coords.longitude.toFixed(4));
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+LAT+'&lon='+LON+'&format=json&accept-language=fr')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var town=d.address.village||d.address.town||d.address.city||'Ma position';
+        LOC=town+(d.address.county?' — '+d.address.county:'');
+        save();btn.textContent='📡';btn.disabled=false;fetchAll();
+      }).catch(function(){LOC='GPS ('+LAT+', '+LON+')';save();btn.textContent='📡';btn.disabled=false;fetchAll();});
+  },function(){alert('Position GPS indisponible');btn.textContent='📡';btn.disabled=false;},{timeout:10000});
 }
 
-function renderPluieChart(daily, normJour) {
-  const W = 800, H = 120, PAD = { top: 16, bottom: 22, left: 28, right: 10 };
-  const cW = W - PAD.left - PAD.right, cH = H - PAD.top - PAD.bottom;
-  const vals = daily.precipitation_sum.slice(0,7);
-  const maxV = Math.max(...vals, normJour * 2, 1);
-
-  function xOf(i, n) { return PAD.left + (i + 0.5) / n * cW; }
-  function yOf(v) { return PAD.top + cH - (v / maxV) * cH; }
-  const barW = cW / 7 * 0.55;
-
-  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  svg += `<rect x="${PAD.left}" y="${PAD.top}" width="${cW}" height="${cH}" fill="#fdfaf5"/>`;
-
-  // Grid
-  [0, Math.round(maxV/2), Math.round(maxV)].forEach(v => {
-    const y = yOf(v);
-    svg += `<line x1="${PAD.left}" y1="${y}" x2="${W-PAD.right}" y2="${y}" stroke="#e8dfcf" stroke-width="0.5"/>`;
-    svg += `<text x="${PAD.left-3}" y="${y+3}" text-anchor="end" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">${v}</text>`;
-  });
-
-  // Normale line
-  const normY = yOf(normJour);
-  svg += `<line x1="${PAD.left}" y1="${normY}" x2="${W-PAD.right}" y2="${normY}" stroke="#4a6fa5" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.7"/>`;
-  svg += `<text x="${W-PAD.right-2}" y="${normY-3}" text-anchor="end" font-size="7" fill="#4a6fa5" font-family="DM Mono,monospace">normale ${normJour.toFixed(1)}mm</text>`;
-
-  // Bars
-  vals.forEach((v, i) => {
-    const x = xOf(i, 7);
-    const bH = Math.max(2, (v / maxV) * cH);
-    const isOver = v > normJour;
-    const fill = isOver ? '#4a6fa5' : '#a8c8e8';
-    svg += `<rect x="${x-barW/2}" y="${yOf(v)}" width="${barW}" height="${bH}" fill="${fill}" rx="2" opacity="0.85"/>`;
-    if (v > 0.1) svg += `<text x="${x}" y="${yOf(v)-3}" text-anchor="middle" font-size="7" fill="#4a6fa5" font-family="DM Mono,monospace">${v.toFixed(1)}</text>`;
-    const dd = new Date(daily.time[i]);
-    svg += `<text x="${x}" y="${PAD.top+cH+10}" text-anchor="middle" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">${DAYS[dd.getDay()]}</text>`;
-  });
-
-  svg += `</svg>`;
-  const pluieWrap = document.querySelector('.pluie-chart-wrap');
-  if (pluieWrap) pluieWrap.innerHTML = svg.replace('<svg', `<svg id="pluie-svg" style="width:100%;height:100%"`);
-}
-
-// ================================================================
-// MODULE 4 — DEGRÉS-JOURS DE CROISSANCE
-// ================================================================
-
-// Stades DJC maïs (base 10°C)
-const STADES_MAIS = [
-  { djc: 0,   label: 'Semis', icon: '🌱' },
-  { djc: 50,  label: 'Levée (VE)', icon: '🌿' },
-  { djc: 200, label: '4 feuilles (V4)', icon: '🌾' },
-  { djc: 400, label: '8 feuilles (V8)', icon: '🌾' },
-  { djc: 650, label: 'Floraison mâle', icon: '🌻' },
-  { djc: 750, label: 'Floraison femelle', icon: '🌽' },
-  { djc: 1200, label: 'Maturité physiologique', icon: '✅' },
-];
-
-// Stades DJC blé (base 0°C)
-const STADES_BLE = [
-  { djc: 0,   label: 'Semis', icon: '🌱' },
-  { djc: 100, label: 'Levée', icon: '🌿' },
-  { djc: 300, label: 'Tallage', icon: '🌾' },
-  { djc: 700, label: 'Montaison', icon: '🌾' },
-  { djc: 1000,label: 'Épiaison', icon: '🌾' },
-  { djc: 1200,label: 'Floraison', icon: '🌸' },
-  { djc: 1600,label: 'Maturité', icon: '✅' },
-];
-
-// Stades DJC orge (base 0°C)
-const STADES_ORGE = [
-  { djc: 0,   label: 'Semis', icon: '🌱' },
-  { djc: 80,  label: 'Levée', icon: '🌿' },
-  { djc: 250, label: 'Tallage', icon: '🌾' },
-  { djc: 600, label: 'Montaison', icon: '🌾' },
-  { djc: 900, label: 'Épiaison', icon: '🌾' },
-  { djc: 1050,label: 'Floraison', icon: '🌸' },
-  { djc: 1400,label: 'Maturité', icon: '✅' },
-];
-
-// Stades DJC colza (base 0°C)
-const STADES_COLZA = [
-  { djc: 0,   label: 'Semis', icon: '🌱' },
-  { djc: 100, label: 'Levée', icon: '🌿' },
-  { djc: 300, label: 'Rosette', icon: '🌿' },
-  { djc: 600, label: 'Montaison', icon: '🌿' },
-  { djc: 900, label: 'Floraison', icon: '🌼' },
-  { djc: 1300,label: 'Maturité', icon: '✅' },
-];
-
-let djcHistData = null; // stocké pour recalcul
-
-function getStade(djc, stades) {
-  let current = stades[0];
-  for (let i = stades.length - 1; i >= 0; i--) {
-    if (djc >= stades[i].djc) { current = stades[i]; break; }
-  }
-  const nextIdx = stades.findIndex(s => s.djc > djc);
-  const next = nextIdx >= 0 ? stades[nextIdx] : null;
-  return { current, next };
-}
-
-function calcDJC(tmax, tmin, base) {
-  const tmoy = (tmax + tmin) / 2;
-  return Math.max(0, tmoy - base);
-}
-
-function renderDJC(daily, histData) {
-  djcHistData = { daily, histData };
-
-  // Restore saved semis date or default to Oct 1 for cereals / May 1 for mais
-  const savedDate = localStorage.getItem('djc_semis_date');
-  const year = new Date().getFullYear();
-  const defaultDate = `${year}-04-25`;
-  const semisDate = savedDate || defaultDate;
-  document.getElementById('djc-semis-date').value = semisDate;
-
-  _computeDJC(semisDate, daily, histData);
-}
-
-function recalcDJC() {
-  const d = document.getElementById('djc-semis-date').value;
-  if (!d) return;
-  localStorage.setItem('djc_semis_date', d);
-  if (djcHistData) _computeDJC(d, djcHistData.daily, djcHistData.histData);
-}
-
-function _computeDJC(semisDateStr, daily, histData) {
-  const semisDate = new Date(semisDateStr);
-  const today = new Date();
-  const daysFromSemis = Math.floor((today - semisDate) / 86400000);
-
-  document.getElementById('djc-semis-hint').textContent =
-    daysFromSemis >= 0 ? `J+${daysFromSemis} depuis le semis` : `Dans ${Math.abs(daysFromSemis)} jours`;
-
-  // Accumulate DJC from semis date using available data
-  // Use forecast daily data for all days
-  let djcMais = 0, djcBle = 0, djcOrge = 0, djcColza = 0;
-  const djcCurve = []; // {date, mais, ble}
-
-  // Combine hist (7 days back) + forecast
-  const allDailyDates = daily.time;
-  const allTmax = daily.temperature_2m_max;
-  const allTmin = daily.temperature_2m_min;
-
-  // Also get past 30 days from hist if available
-  // Build a combined date→{tmax,tmin} map
-  const tempMap = {};
-  allDailyDates.forEach((d,i) => { tempMap[d] = { tmax: allTmax[i], tmin: allTmin[i] }; });
-
-  // Historical data (from archive, 7 days)
-  // Build daily from hourly hist
-  if (histData && histData.hourly) {
-    const ht = histData.hourly.time;
-    const hst = histData.hourly.soil_temperature_6cm; // use air temp proxy
-    // We don't have air temp in hist, so we skip detailed past
-    // Just use forecast data and note limitation
-  }
-
-  // Calculate from semis date forward using forecast data
-  const today0 = today.toISOString().slice(0,10);
-  let accMais = 0, accBle = 0, accOrge = 0, accColza = 0;
-  const curveDates = [], curveMais = [], curveBle = [];
-
-  allDailyDates.forEach((d, i) => {
-    if (d < semisDateStr) return;
-    const tmax = allTmax[i], tmin = allTmin[i];
-    accMais  += calcDJC(tmax, tmin, 10);
-    accBle   += calcDJC(tmax, tmin, 0);
-    accOrge  += calcDJC(tmax, tmin, 0);
-    accColza += calcDJC(tmax, tmin, 0);
-    if (d <= today0) {
-      curveDates.push(d); curveMais.push(accMais); curveBle.push(accBle);
-    }
-    if (d === today0) {
-      djcMais = accMais; djcBle = accBle; djcOrge = accOrge; djcColza = accColza;
-    }
-  });
-
-  // If semis is in the future, show 0
-  if (daysFromSemis < 0) { djcMais = djcBle = djcOrge = djcColza = 0; }
-
-  const cultures = [
-    { name: '🌽 Maïs', cls: 'mais', djc: Math.round(djcMais), base: 10, max: 1200, stades: STADES_MAIS, barCls: 'mais' },
-    { name: '🌾 Blé tendre', cls: 'ble', djc: Math.round(djcBle), base: 0, max: 1600, stades: STADES_BLE, barCls: 'ble' },
-    { name: '🟤 Orge', cls: 'orge', djc: Math.round(djcOrge), base: 0, max: 1400, stades: STADES_ORGE, barCls: 'orge' },
-    { name: '🌼 Colza', cls: 'colza', djc: Math.round(djcColza), base: 0, max: 1300, stades: STADES_COLZA, barCls: 'colza' },
-  ];
-
-  document.getElementById('djc-cultures').innerHTML = cultures.map(c => {
-    const { current, next } = getStade(c.djc, c.stades);
-    const pct = Math.min(100, (c.djc / c.max) * 100);
-    const djcToNext = next ? next.djc - c.djc : 0;
-    return `<div class="djc-culture-card ${c.cls}">
-      <div class="djc-culture-name">${c.name} · Base ${c.base}°C</div>
-      <div class="djc-stade">${current.icon} ${current.label}</div>
-      <div class="djc-value">${c.djc} DJC accumulés</div>
-      <div class="djc-bar-wrap"><div class="djc-bar-fill ${c.barCls}" style="width:${pct}%"></div></div>
-      <div class="djc-next-stade">${next ? `→ ${next.icon} ${next.label} dans ~${djcToNext} DJC` : '✅ Cycle complet'}</div>
-    </div>`;
-  }).join('');
-
-  // DJC curve chart
-  renderDJCChart(curveDates, curveMais, curveBle);
-}
-
-function renderDJCChart(dates, mais, ble) {
-  if (!dates.length) { document.getElementById('djc-svg').innerHTML = ''; return; }
-  const W = 800, H = 110, PAD = { top: 14, bottom: 22, left: 36, right: 10 };
-  const cW = W - PAD.left - PAD.right, cH = H - PAD.top - PAD.bottom;
-  const N = dates.length;
-  const maxV = Math.max(...mais, ...ble, 100);
-
-  function xOf(i) { return PAD.left + (i / Math.max(N-1,1)) * cW; }
-  function yOf(v) { return PAD.top + cH - (v / maxV) * cH; }
-
-  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  svg += `<rect x="${PAD.left}" y="${PAD.top}" width="${cW}" height="${cH}" fill="#fdfaf5"/>`;
-
-  [0, Math.round(maxV/2), Math.round(maxV)].forEach(v => {
-    const y = yOf(v);
-    svg += `<line x1="${PAD.left}" y1="${y}" x2="${W-PAD.right}" y2="${y}" stroke="#e8dfcf" stroke-width="0.5"/>`;
-    svg += `<text x="${PAD.left-3}" y="${y+3}" text-anchor="end" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">${v}</text>`;
-  });
-
-  // BLE line
-  if (ble.length > 1) {
-    const bleLine = ble.map((v,i) => `${xOf(i)},${yOf(v)}`).join(' ');
-    svg += `<polyline points="${bleLine}" fill="none" stroke="#c9a84c" stroke-width="2" opacity="0.8"/>`;
-  }
-  // MAIS line
-  if (mais.length > 1) {
-    const maisLine = mais.map((v,i) => `${xOf(i)},${yOf(v)}`).join(' ');
-    svg += `<polyline points="${maisLine}" fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue('--maize') || '#e8b84b'}" stroke-width="2.5"/>`;
-  }
-
-  // Date labels
-  dates.forEach((d, i) => {
-    if (i % Math.max(1, Math.floor(N/6)) === 0) {
-      const dd = new Date(d);
-      svg += `<text x="${xOf(i)}" y="${PAD.top+cH+10}" text-anchor="middle" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">${dd.getDate()}/${dd.getMonth()+1}</text>`;
-    }
-  });
-
-  // Legend
-  svg += `<circle cx="${W-80}" cy="${PAD.top+8}" r="4" fill="#e8b84b"/><text x="${W-73}" y="${PAD.top+12}" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">Maïs</text>`;
-  svg += `<circle cx="${W-40}" cy="${PAD.top+8}" r="4" fill="#c9a84c"/><text x="${W-33}" y="${PAD.top+12}" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">Blé</text>`;
-
-  svg += `</svg>`;
-  const djcWrap = document.querySelector('.djc-chart-wrap');
-  if (djcWrap) djcWrap.innerHTML = svg.replace('<svg', `<svg id="djc-svg" style="width:100%;height:100%"`);
-}
-
-
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  e.target.classList.add('active');
-}
-
-// Search input handler
-let searchTimeout;
-document.getElementById('search-input').addEventListener('input', function() {
-  clearTimeout(searchTimeout);
-  const q = this.value.trim();
-  if (q.length < 2) { document.getElementById('search-results').style.display = 'none'; return; }
-  searchTimeout = setTimeout(async () => {
-    const results = await searchLocation(q);
-    showResults(results);
-  }, 350);
+// ── RECHERCHE ────────────────────────────────────────────────────
+var _st;
+g('q').addEventListener('input',function(){
+  clearTimeout(_st);
+  var v=this.value.trim();
+  if(v.length<2){g('sr').style.display='none';return;}
+  _st=setTimeout(function(){
+    fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(v)+'&count=6&language=fr&countryCode=FR')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var res=d.results||[];
+        if(!res.length){g('sr').innerHTML='<div class="sri" style="color:#9a8878;cursor:default">Aucun résultat</div>';g('sr').style.display='block';return;}
+        window._geoRes=res;
+        g('sr').innerHTML=res.map(function(r,i){
+          return '<div class="sri" onclick="pick('+i+')">📍 <strong>'+r.name+'</strong> <span style="opacity:.6;font-size:.85em">'+(r.admin2||'')+' '+(r.admin1||'')+'</span></div>';
+        }).join('');
+        g('sr').style.display='block';
+      });
+  },350);
 });
+g('q').addEventListener('keydown',function(e){if(e.key==='Escape')g('sr').style.display='none';});
+document.addEventListener('click',function(e){if(!e.target.closest('.search-inner'))g('sr').style.display='none';});
+function pick(i){
+  var r=window._geoRes[i];
+  LAT=r.latitude;LON=r.longitude;
+  LOC=r.name+(r.admin2?' — '+r.admin2:'')+(r.admin1?' ('+r.admin1+')':'');
+  g('q').value=r.name;g('sr').style.display='none';
+  save();fetchAll();
+}
+function save(){localStorage.setItem('m_lat',LAT);localStorage.setItem('m_lon',LON);localStorage.setItem('m_loc',LOC);}
 
-document.getElementById('search-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') document.getElementById('search-results').style.display = 'none';
-});
+// ── TABS ─────────────────────────────────────────────────────────
+function switchTab(id,btn){
+  document.querySelectorAll('.tabp').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(function(el){el.classList.remove('active');});
+  g('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
 
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.search-wrap')) document.getElementById('search-results').style.display = 'none';
-});
-
-load();
+// ── INIT ─────────────────────────────────────────────────────────
+(function init(){
+  var sl=localStorage.getItem('m_lat'),sn=localStorage.getItem('m_loc'),slo=localStorage.getItem('m_lon');
+  if(sl&&sn&&slo){LAT=parseFloat(sl);LON=parseFloat(slo);LOC=sn;g('q').value=sn;}
+  fetchAll();
+})();
 </script>
 </body>
 </html>
