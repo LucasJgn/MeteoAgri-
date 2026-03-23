@@ -1229,10 +1229,6 @@ async function fetchAndRender() {
   document.getElementById('content').style.display = 'none';
   document.getElementById('loading').innerHTML = '<div class="spinner"></div>Chargement des données météo…';
 
-  // Cache key based on location + date (cache 30 min)
-  const cacheKey = `meteo_cache_${LAT}_${LON}_${new Date().toISOString().slice(0,13)}`;
-  const cached = sessionStorage.getItem(cacheKey);
-
   try {
     const today = new Date();
     const todayStr = today.toISOString().slice(0,10);
@@ -1249,35 +1245,27 @@ async function fetchAndRender() {
       + `&start_date=${past7str}&end_date=${todayStr}`
       + `&timezone=Europe%2FParis`;
 
-    // --- ÉTAPE 1 : charger et afficher le forecast IMMÉDIATEMENT ---
-    let forecastData;
-    if (cached) {
-      forecastData = JSON.parse(cached);
-    } else {
-      forecastData = await fetch(urlForecast).then(r => r.json());
-      try { sessionStorage.setItem(cacheKey, JSON.stringify(forecastData)); } catch(e) {}
-    }
+    // ÉTAPE 1 — Forecast seul affiché immédiatement
+    const forecastData = await fetch(urlForecast).then(r => r.json());
 
     document.getElementById('location-badge-text').textContent = '📍 ' + LOCATION_NAME;
     const mob = document.getElementById('mobile-location');
     mob.textContent = '📍 ' + LOCATION_NAME;
     mob.style.display = window.innerWidth <= 640 ? 'block' : 'none';
 
-    // Afficher le contenu principal avec un histData vide temporairement
     const emptyHist = { hourly: { time: [], soil_temperature_6cm: [] } };
     render(forecastData, emptyHist);
 
-    // --- ÉTAPE 2 : charger l'historique sol EN ARRIÈRE-PLAN ---
-    fetch(urlHistory).then(r => r.json()).then(histData => {
-      // Mettre à jour uniquement le graphique sol et le module DJC
-      updateSoilModules(forecastData, histData);
-    }).catch(() => {
-      // Silently fail — the rest of the dashboard is already visible
-    });
+    // ÉTAPE 2 — Historique sol en arrière-plan
+    fetch(urlHistory)
+      .then(r => r.json())
+      .then(histData => { updateSoilModules(forecastData, histData); })
+      .catch(() => {});
 
   } catch(e) {
     console.error(e);
-    document.getElementById('loading').innerHTML = '<p style="color:var(--danger)">❌ Impossible de charger les données météo.<br><small>Vérifiez votre connexion internet.</small></p>';
+    document.getElementById('loading').innerHTML =
+      '<p style="color:var(--danger)">❌ Impossible de charger les données météo.<br><small>Vérifiez votre connexion internet.</small></p>';
   }
 }
 
@@ -1715,6 +1703,7 @@ function renderSoilChart(pastDates, pastAvgs, fcastDates, fcastAvgs) {
   const chartH = H - PAD.top - PAD.bottom;
 
   const allVals = [...pastAvgs, ...fcastAvgs].filter(v => v !== null);
+  if (!allVals.length) return; // pas de données, on sort silencieusement
   const minV = Math.min(...allVals, SEUIL_SOL) - 1;
   const maxV = Math.max(...allVals, SEUIL_SOL) + 1;
 
@@ -1809,7 +1798,8 @@ function renderSoilChart(pastDates, pastAvgs, fcastDates, fcastAvgs) {
   });
 
   svg += `</svg>`;
-  document.getElementById('soil-svg').outerHTML = svg.replace('<svg', `<svg id="soil-svg" style="width:100%;height:100%"`);
+  const wrap = document.getElementById('soil-chart-wrap');
+  if (wrap) wrap.innerHTML = svg.replace('<svg', `<svg id="soil-svg" style="width:100%;height:100%"`);
 }
 
 // ================================================================
@@ -2064,7 +2054,8 @@ function renderPluieChart(daily, normJour) {
   });
 
   svg += `</svg>`;
-  document.getElementById('pluie-svg').outerHTML = svg.replace('<svg', `<svg id="pluie-svg" style="width:100%;height:100%"`);
+  const pluieWrap = document.querySelector('.pluie-chart-wrap');
+  if (pluieWrap) pluieWrap.innerHTML = svg.replace('<svg', `<svg id="pluie-svg" style="width:100%;height:100%"`);
 }
 
 // ================================================================
@@ -2273,7 +2264,8 @@ function renderDJCChart(dates, mais, ble) {
   svg += `<circle cx="${W-40}" cy="${PAD.top+8}" r="4" fill="#c9a84c"/><text x="${W-33}" y="${PAD.top+12}" font-size="7" fill="#9a8878" font-family="DM Mono,monospace">Blé</text>`;
 
   svg += `</svg>`;
-  document.getElementById('djc-svg').outerHTML = svg.replace('<svg', `<svg id="djc-svg" style="width:100%;height:100%"`);
+  const djcWrap = document.querySelector('.djc-chart-wrap');
+  if (djcWrap) djcWrap.innerHTML = svg.replace('<svg', `<svg id="djc-svg" style="width:100%;height:100%"`);
 }
 
 
